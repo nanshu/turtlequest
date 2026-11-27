@@ -4,7 +4,7 @@ import { translatePythonError } from "../runtime/error-helper.js";
 import { TurtlePlayer } from "../turtle/player.js";
 import { TurtleRenderer } from "../turtle/renderer.js";
 import { escapeHtml, formatInlineText } from "./format.js";
-import { showInputModal } from "./modals.js";
+import { showCheatSheetModal, showInputModal } from "./modals.js";
 import { soundFX } from "./sound.js";
 
 const SPEEDS = [
@@ -90,6 +90,7 @@ export function renderSandboxView(
               <span style="font-size:0.76rem; color:var(--text-soft);">Try colors, loops, circle(), dot(), input()!</span>
             </div>
             <div class="editor-toolbar-right">
+              <button id="sb-cheat-btn" class="btn btn-ghost btn-sm" type="button">🧰 Cheat Sheet</button>
               <button id="sb-stop-btn" class="btn btn-coral btn-sm" type="button" style="display:none;">⏹ Stop</button>
               <button id="sb-run-btn" class="btn btn-green btn-sm" type="button">▶ Run Art</button>
             </div>
@@ -341,6 +342,12 @@ export function renderSandboxView(
   }
 
   container.querySelector("#sb-back-btn").addEventListener("click", onBack);
+  container.querySelector("#sb-cheat-btn").addEventListener("click", () => {
+    soundFX.playClick();
+    showCheatSheetModal({
+      onInsertSnippet: (snippet) => editor.insertText(snippet),
+    });
+  });
   runBtn.addEventListener("click", runSandbox);
   stopBtn.addEventListener("click", () => runner.stop("user"));
 
@@ -403,6 +410,9 @@ export function renderSandboxView(
   });
 
   return {
+    insertSnippet(snippet) {
+      editor.insertText(snippet);
+    },
     updateAppearance({ skin, rainbowTrail }) {
       if (skin) renderer.setSkin(skin);
       if (typeof rainbowTrail === "boolean") renderer.setRainbowTrail(rainbowTrail);

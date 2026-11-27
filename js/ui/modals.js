@@ -1,3 +1,4 @@
+import { CHEAT_SHEET_SECTIONS } from "../curriculum/index.js";
 import { TURTLE_SKINS } from "../state/progress.js";
 import { exportStateJSON } from "../state/store.js";
 import { escapeHtml, formatInlineText } from "./format.js";
@@ -378,4 +379,137 @@ export function showBackupModal({ state, onImportState }) {
       showStatus(false, res.error || "Invalid JSON save text.");
     }
   });
+}
+
+export function showCheatSheetModal({ onInsertSnippet = null } = {}) {
+  const root = getModalRoot();
+  closeAllModals();
+
+  let activeTab = CHEAT_SHEET_SECTIONS[0].id;
+  const wrap = document.createElement("div");
+  wrap.className = "modal-backdrop";
+
+  const onEsc = (e) => {
+    if (e.key === "Escape") closeSheet();
+  };
+  function closeSheet() {
+    activeModalCleanups.delete(closeSheet);
+    document.removeEventListener("keydown", onEsc);
+    wrap.remove();
+  }
+  activeModalCleanups.add(closeSheet);
+  document.addEventListener("keydown", onEsc);
+
+  function render() {
+    const section = CHEAT_SHEET_SECTIONS.find((s) => s.id === activeTab) || CHEAT_SHEET_SECTIONS[0];
+
+    const tabsHtml = CHEAT_SHEET_SECTIONS.map(
+      (s) =>
+        `<button class="cheat-tab-btn ${s.id === activeTab ? "active" : ""}" data-tab="${
+          s.id
+        }" type="button">${escapeHtml(s.label)}</button>`
+    ).join("");
+
+    const swatchesHtml = section.colors
+      ? `
+        <div class="color-swatch-row">
+          ${section.colors
+            .map(
+              (c) => `
+            <button class="color-swatch-chip" data-color="${escapeHtml(c.name)}" type="button" title='Click to copy t.pencolor("${escapeHtml(
+              c.name
+            )}")'>
+              <span class="swatch-dot" style="background:${c.hex};"></span>
+              <span>"${escapeHtml(c.name)}"</span>
+            </button>
+          `
+            )
+            .join("")}
+        </div>
+      `
+      : "";
+
+    const itemsHtml = section.items
+      .map(
+        (item, idx) => `
+        <div class="cheat-item">
+          <div class="cheat-item-main">
+            <pre class="cheat-code"><code>${escapeHtml(item.code)}</code></pre>
+            <div class="cheat-desc">${formatInlineText(item.desc)}</div>
+          </div>
+          <div class="cheat-item-actions">
+            ${
+              onInsertSnippet
+                ? `<button class="btn btn-green btn-sm cheat-insert-btn" data-idx="${idx}" type="button">➕ Insert</button>`
+                : ""
+            }
+            <button class="btn btn-ghost btn-sm cheat-copy-btn" data-idx="${idx}" type="button">📋 Copy</button>
+          </div>
+        </div>
+      `
+      )
+      .join("");
+
+    wrap.innerHTML = `
+      <div class="modal-card" style="max-width:700px;" role="dialog" aria-modal="true">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;">
+          <h2 style="margin:0;">🧰 Python &amp; Turtle Cheat Sheet</h2>
+          <button id="cheat-close-btn" class="btn btn-ghost btn-sm" type="button">Close</button>
+        </div>
+        <div class="cheat-tabs">${tabsHtml}</div>
+        ${swatchesHtml}
+        <div class="cheat-items-list">${itemsHtml}</div>
+      </div>
+    `;
+
+    wrap.querySelector("#cheat-close-btn").addEventListener("click", closeSheet);
+    wrap.querySelectorAll(".cheat-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeTab = btn.dataset.tab;
+        render();
+      });
+    });
+
+    wrap.querySelectorAll(".color-swatch-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const snippet = `t.pencolor("${btn.dataset.color}")`;
+        if (onInsertSnippet) {
+          onInsertSnippet(snippet);
+          closeSheet();
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(snippet).catch(() => {});
+          btn.style.borderColor = "var(--green)";
+        }
+      });
+    });
+
+    wrap.querySelectorAll(".cheat-insert-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const item = section.items[Number(btn.dataset.idx)];
+        if (item && onInsertSnippet) {
+          onInsertSnippet(item.code);
+          closeSheet();
+        }
+      });
+    });
+
+    wrap.querySelectorAll(".cheat-copy-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const item = section.items[Number(btn.dataset.idx)];
+        if (item && navigator.clipboard) {
+          navigator.clipboard.writeText(item.code).catch(() => {});
+        }
+        btn.textContent = "Copied ✓";
+        setTimeout(() => {
+          if (btn.isConnected) btn.textContent = "📋 Copy";
+        }, 1200);
+      });
+    });
+  }
+
+  render();
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) closeSheet();
+  });
+  root.appendChild(wrap);
 }

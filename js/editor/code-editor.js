@@ -201,6 +201,34 @@ export class CodeEditor {
     }
   }
 
+  insertText(snippet) {
+    if (!snippet) return;
+    if (this.view) {
+      const state = this.view.state;
+      const sel = state.selection.main;
+      const docText = state.doc.toString();
+      const atEnd = sel.from === 0 && sel.to === 0 && docText.trim().length > 0;
+      const pos = atEnd ? docText.length : sel.from;
+      const prefix = pos > 0 && docText[pos - 1] !== "\n" ? "\n" : "";
+      const toInsert = `${prefix}${snippet}\n`;
+      this.view.dispatch({
+        changes: { from: pos, to: atEnd ? pos : sel.to, insert: toInsert },
+        selection: { anchor: pos + toInsert.length },
+      });
+      this.view.focus();
+    } else if (this._textarea) {
+      const ta = this._textarea;
+      const val = ta.value;
+      const pos = ta.selectionStart || val.length;
+      const prefix = pos > 0 && val[pos - 1] !== "\n" ? "\n" : "";
+      const toInsert = `${prefix}${snippet}\n`;
+      ta.value = `${val.slice(0, pos)}${toInsert}${val.slice(ta.selectionEnd || pos)}`;
+      ta.selectionStart = ta.selectionEnd = pos + toInsert.length;
+      ta.focus();
+      this.onChange(ta.value);
+    }
+  }
+
   setActiveLine(lineNum) {
     this._activeLine = lineNum || null;
     this._applyHighlights();

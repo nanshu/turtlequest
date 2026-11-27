@@ -4,8 +4,9 @@ import { TurtlePlayer } from "../turtle/player.js";
 import { TurtleRenderer } from "../turtle/renderer.js";
 import { verifyMission } from "../verifier/checker.js";
 import { escapeHtml, formatInlineText } from "./format.js";
-import { showInputModal } from "./modals.js";
+import { showCheatSheetModal, showInputModal } from "./modals.js";
 import { soundFX } from "./sound.js";
+import { renderVisualDiagram } from "./tutorial-view.js";
 
 const SPEEDS = [
   { id: "step", label: "Step" },
@@ -25,6 +26,13 @@ export function renderLessonView(
     ? savedDraft
     : lesson.starterCode;
 
+  const tutorialSteps = Array.isArray(lesson.tutorial) ? lesson.tutorial : [];
+  const hasTutorial = tutorialSteps.length > 0;
+  const alreadyCompleted = Boolean(state.completedLessons?.[lesson.id]?.passed);
+  const hasCustomDraft = typeof savedDraft === "string" && savedDraft.trim() !== "" && savedDraft !== lesson.starterCode;
+
+  let activeCardTab = hasTutorial && !alreadyCompleted && !hasCustomDraft ? "learn" : "mission";
+  let tutorialStepIdx = 0;
   let hintsRevealed = 0;
   let showGrid = Boolean(lesson.showGridDefault);
   let showBlueprint = Boolean(lesson.blueprint && lesson.blueprint.length > 0);
@@ -46,35 +54,53 @@ export function renderLessonView(
     <div class="workspace-grid">
       <div class="workspace-col">
         <section class="card mission-card">
-          <p class="mission-story">${formatInlineText(lesson.story)}</p>
           ${
-            lesson.mathTip
-              ? `<div class="math-tip-box">📐 <strong>Math Power:</strong> ${formatInlineText(lesson.mathTip)}</div>`
-              : ""
-          }
-          <ul class="goals-list" id="ws-goals-list">
-            ${lesson.goals
-              .map(
-                (g) => `<li class="goal-item"><span>⬜</span><span>${formatInlineText(g)}</span></li>`
-              )
-              .join("")}
-          </ul>
-          ${
-            lesson.bonusGoal
-              ? `<div class="goal-item bonus" id="ws-bonus-goal" style="margin-top:8px;"><span>⭐</span><span>${formatInlineText(
-                  lesson.bonusGoal
-                )}</span></div>`
+            hasTutorial
+              ? `
+              <div class="mission-tabs" role="tablist">
+                <button id="ws-tab-learn" class="mission-tab-btn ${activeCardTab === "learn" ? "active" : ""}" type="button">
+                  📖 Learn First (${tutorialSteps.length})
+                </button>
+                <button id="ws-tab-mission" class="mission-tab-btn ${activeCardTab === "mission" ? "active" : ""}" type="button">
+                  🎯 Mission &amp; Goals
+                </button>
+              </div>
+              <div id="ws-learn-panel" class="learn-panel" style="display:${activeCardTab === "learn" ? "block" : "none"};"></div>
+            `
               : ""
           }
 
-          <div class="hints-bar">
-            <div class="hints-actions">
-              <button id="ws-hint-btn" class="btn btn-ghost btn-sm" type="button">
-                💡 Need a Hint? (0/${lesson.hints.length})
-              </button>
-              <button id="ws-reset-btn" class="btn btn-ghost btn-sm" type="button">↺ Reset Code</button>
+          <div id="ws-mission-panel" style="display:${activeCardTab === "mission" ? "block" : "none"};">
+            <p class="mission-story">${formatInlineText(lesson.story)}</p>
+            ${
+              lesson.mathTip
+                ? `<div class="math-tip-box">📐 <strong>Math Power:</strong> ${formatInlineText(lesson.mathTip)}</div>`
+                : ""
+            }
+            <ul class="goals-list" id="ws-goals-list">
+              ${lesson.goals
+                .map(
+                  (g) => `<li class="goal-item"><span>⬜</span><span>${formatInlineText(g)}</span></li>`
+                )
+                .join("")}
+            </ul>
+            ${
+              lesson.bonusGoal
+                ? `<div class="goal-item bonus" id="ws-bonus-goal" style="margin-top:8px;"><span>⭐</span><span>${formatInlineText(
+                    lesson.bonusGoal
+                  )}</span></div>`
+                : ""
+            }
+
+            <div class="hints-bar">
+              <div class="hints-actions">
+                <button id="ws-hint-btn" class="btn btn-ghost btn-sm" type="button">
+                  💡 Need a Hint? (0/${lesson.hints.length})
+                </button>
+                <button id="ws-reset-btn" class="btn btn-ghost btn-sm" type="button">↺ Reset Code</button>
+              </div>
+              <div id="ws-hints-list" style="display:flex; flex-direction:column; gap:6px;"></div>
             </div>
-            <div id="ws-hints-list" style="display:flex; flex-direction:column; gap:6px;"></div>
           </div>
         </section>
 
@@ -82,9 +108,10 @@ export function renderLessonView(
           <div class="editor-toolbar">
             <div class="editor-toolbar-left">
               <span class="editor-label">🐍 Python Editor</span>
-              <span style="font-size:0.76rem; color:var(--text-soft);">Cmd/Ctrl + Enter to run</span>
+              <span style="font-size:0.76rem; color:var(--text-soft);">Cmd/Ctrl + Enter</span>
             </div>
             <div class="editor-toolbar-right">
+              <button id="ws-cheat-btn" class="btn btn-ghost btn-sm" type="button">🧰 Cheat Sheet</button>
               <button id="ws-stop-btn" class="btn btn-coral btn-sm" type="button" style="display:none;">⏹ Stop</button>
               <button id="ws-run-btn" class="btn btn-green btn-sm" type="button">▶ Run Code</button>
             </div>
@@ -379,8 +406,85 @@ export function renderLessonView(
     }
   }
 
+  const learnTabBtn = container.querySelector("#ws-tab-learn");
+  const missionTabBtn = container.querySelector("#ws-tab-mission");
+  const learnPanelEl = container.querySelector("#ws-learn-panel");
+  const missionPanelEl = container.querySelector("#ws-mission-panel");
+
+  function setCardTab(tabName) {
+    activeCardTab = tabName;
+    if (learnTabBtn && missionTabBtn && learnPanelEl && missionPanelEl) {
+      learnTabBtn.classList.toggle("active", tabName === "learn");
+      missionTabBtn.classList.toggle("active", tabName === "mission");
+      learnPanelEl.style.display = tabName === "learn" ? "block" : "none";
+      missionPanelEl.style.display = tabName === "mission" ? "block" : "none";
+    }
+  }
+
+  function renderLearnStep() {
+    if (!hasTutorial || !learnPanelEl) return;
+    const step = tutorialSteps[tutorialStepIdx];
+    const isLast = tutorialStepIdx >= tutorialSteps.length - 1;
+    learnPanelEl.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+        <strong style="font-size:1.02rem; color:var(--blue-dark);">${escapeHtml(step.title)}</strong>
+        <span style="font-size:0.76rem; font-weight:800; color:var(--text-muted);">
+          Card ${tutorialStepIdx + 1} / ${tutorialSteps.length}
+        </span>
+      </div>
+      <p class="mission-story" style="margin-bottom:8px;">${formatInlineText(step.body)}</p>
+      ${step.diagram ? renderVisualDiagram(step.diagram) : ""}
+      ${step.code ? `<pre class="mini-code-block" style="margin:8px 0;"><code>${escapeHtml(step.code)}</code></pre>` : ""}
+      ${step.tip ? `<div class="hint-box" style="margin-top:8px;">💡 ${formatInlineText(step.tip)}</div>` : ""}
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:12px;">
+        <button id="ws-learn-prev" class="btn btn-ghost btn-sm" type="button" ${tutorialStepIdx === 0 ? "disabled" : ""}>
+          ← Back
+        </button>
+        <button id="ws-learn-next" class="btn ${isLast ? "btn-green" : "btn-blue"} btn-sm" type="button">
+          ${isLast ? "Got it — Let's Code! ➜" : "Next Tip ➜"}
+        </button>
+      </div>
+    `;
+
+    learnPanelEl.querySelector("#ws-learn-prev").addEventListener("click", () => {
+      if (tutorialStepIdx > 0) {
+        soundFX.playClick();
+        tutorialStepIdx -= 1;
+        renderLearnStep();
+      }
+    });
+    learnPanelEl.querySelector("#ws-learn-next").addEventListener("click", () => {
+      soundFX.playClick();
+      if (!isLast) {
+        tutorialStepIdx += 1;
+        renderLearnStep();
+      } else {
+        setCardTab("mission");
+        editor.focus();
+      }
+    });
+  }
+
+  if (hasTutorial) {
+    renderLearnStep();
+    learnTabBtn.addEventListener("click", () => {
+      soundFX.playClick();
+      setCardTab("learn");
+    });
+    missionTabBtn.addEventListener("click", () => {
+      soundFX.playClick();
+      setCardTab("mission");
+    });
+  }
+
   // Event wiring
   container.querySelector("#ws-back-btn").addEventListener("click", onBack);
+  container.querySelector("#ws-cheat-btn").addEventListener("click", () => {
+    soundFX.playClick();
+    showCheatSheetModal({
+      onInsertSnippet: (snippet) => editor.insertText(snippet),
+    });
+  });
   runBtn.addEventListener("click", runCode);
   stopBtn.addEventListener("click", () => {
     runner.stop("user");
@@ -444,6 +548,9 @@ export function renderLessonView(
   }
 
   return {
+    insertSnippet(snippet) {
+      editor.insertText(snippet);
+    },
     updateAppearance({ skin, rainbowTrail }) {
       if (skin) renderer.setSkin(skin);
       if (typeof rainbowTrail === "boolean") renderer.setRainbowTrail(rainbowTrail);

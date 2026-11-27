@@ -1,12 +1,30 @@
+import { CHEAT_SHEET_SECTIONS, LESSON_TUTORIALS, UNIT_TUTORIAL_NODES } from "./tutorials.js";
 import { UNIT_1, UNIT_1_NODES } from "./unit1-basics.js";
 import { UNIT_2, UNIT_2_NODES } from "./unit2-loops.js";
 import { UNIT_3, UNIT_3_NODES } from "./unit3-vars-math.js";
 
+function attachTutorials(nodes) {
+  return nodes.map((node) =>
+    node.type === "code" && LESSON_TUTORIALS[node.id]
+      ? { ...node, tutorial: LESSON_TUTORIALS[node.id] }
+      : node
+  );
+}
+
 export const UNITS = [UNIT_1, UNIT_2, UNIT_3];
 
-export const ALL_NODES = [...UNIT_1_NODES, ...UNIT_2_NODES, ...UNIT_3_NODES];
+export const ALL_NODES = [
+  UNIT_TUTORIAL_NODES.unit1,
+  ...attachTutorials(UNIT_1_NODES),
+  UNIT_TUTORIAL_NODES.unit2,
+  ...attachTutorials(UNIT_2_NODES),
+  UNIT_TUTORIAL_NODES.unit3,
+  ...attachTutorials(UNIT_3_NODES),
+];
 
 export const ORDERED_NODE_IDS = ALL_NODES.map((n) => n.id);
+
+export { CHEAT_SHEET_SECTIONS };
 
 export function getNodeById(nodeId) {
   return ALL_NODES.find((n) => n.id === nodeId) || null;

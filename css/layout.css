@@ -982,6 +982,308 @@
   border-color: var(--blue);
 }
 
+/* ================= TUTORIALS, LEARN TABS & CHEAT SHEET ================= */
+.tutorial-container {
+  max-width: 740px;
+  margin: 12px auto;
+  padding: 24px;
+  animation: pop-in 0.2s ease;
+}
+
+.tutorial-body {
+  margin: 0 0 12px;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--text-main);
+}
+
+.tutorial-diagram-card {
+  background: var(--bg-app);
+  border: 2px solid var(--border-light);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 10px 0;
+}
+
+.tutorial-svg {
+  width: 100%;
+  max-width: 360px;
+  display: block;
+  margin: 0 auto;
+}
+
+.anatomy-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.anatomy-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+}
+
+.anatomy-pill code {
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.anatomy-pill span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.anatomy-pill.pill-green { background: var(--green-soft); border-color: #b7ef8a; color: #266000; }
+.anatomy-pill.pill-blue { background: var(--blue-soft); border-color: #b6e3fc; color: #0c5887; }
+.anatomy-pill.pill-purple { background: var(--purple-soft); border-color: #dfc0fa; color: #5b2187; }
+
+.anatomy-dot {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--text-muted);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.compare-label {
+  font-size: 0.82rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+.compare-label.bad { color: var(--coral-dark); }
+.compare-label.good { color: var(--green-dark); }
+
+.var-boxes-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.var-box {
+  background: #ffffff;
+  border: 2px solid var(--border-mid);
+  border-radius: 12px;
+  min-width: 110px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.var-box.accent {
+  border-color: var(--purple);
+}
+
+.var-box-label {
+  background: var(--bg-subtle);
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.var-box.accent .var-box-label {
+  background: var(--purple-soft);
+  color: var(--purple-dark);
+}
+
+.var-box-val {
+  padding: 10px;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.widget-box {
+  background: var(--bg-app);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  padding: 14px;
+  margin: 12px 0;
+}
+
+.widget-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.widget-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.mini-turtle-canvas {
+  width: 100%;
+  height: 190px;
+  border: 2px solid var(--border-light);
+  border-radius: 12px;
+  background: #ffffff;
+  display: block;
+}
+
+.mini-code-block {
+  margin: 0;
+  background: #172030;
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.live-code-preview {
+  min-height: 130px;
+}
+
+/* Lesson Card Learn / Mission Tabs */
+.mission-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-subtle);
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.mission-tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+.mission-tab-btn.active {
+  background: #ffffff;
+  color: var(--text-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Cheat Sheet Modal */
+.cheat-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cheat-tab-btn {
+  border: 2px solid var(--border-light);
+  background: #ffffff;
+  border-radius: 11px;
+  padding: 7px 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.cheat-tab-btn.active {
+  background: var(--blue-soft);
+  border-color: #9ddcfb;
+  color: var(--blue-dark);
+}
+
+.color-swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.color-swatch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--border-light);
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.color-swatch-chip:hover {
+  background: var(--bg-subtle);
+}
+
+.swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.cheat-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cheat-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-app);
+  border: 1.5px solid var(--border-light);
+}
+
+.cheat-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cheat-code {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f4c81;
+  white-space: pre-wrap;
+}
+
+.cheat-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.cheat-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .compare-grid,
+  .widget-split {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 980px) {
   .workspace-grid {
     grid-template-columns: 1fr;

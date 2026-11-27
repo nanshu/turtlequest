@@ -8,11 +8,12 @@ import {
 } from "./state/progress.js";
 import { importStateJSON, loadState, saveState, updateState } from "./state/store.js";
 import { renderLessonView } from "./ui/lesson-view.js";
-import { showBackupModal, showShopModal, showVictoryModal } from "./ui/modals.js";
+import { showBackupModal, showCheatSheetModal, showShopModal, showVictoryModal } from "./ui/modals.js";
 import { renderQuizView } from "./ui/quiz-view.js";
 import { renderSandboxView } from "./ui/sandbox-view.js";
 import { renderSkillMap } from "./ui/skill-map.js";
 import { soundFX } from "./ui/sound.js";
+import { renderTutorialView } from "./ui/tutorial-view.js";
 
 let appState = refreshDailyCounters(loadState());
 saveState(appState);
@@ -25,6 +26,7 @@ const appRoot = document.getElementById("app-root");
 const navPathBtn = document.getElementById("nav-path");
 const navSandboxBtn = document.getElementById("nav-sandbox");
 const navShopBtn = document.getElementById("nav-shop");
+const navGuideBtn = document.getElementById("nav-guide");
 const soundToggleBtn = document.getElementById("sound-toggle-btn");
 const backupBtn = document.getElementById("backup-btn");
 const pyBadge = document.getElementById("py-status-badge");
@@ -141,6 +143,14 @@ function navigateToNode(nodeId) {
     });
   };
 
+  if (node.type === "tutorial") {
+    renderTutorialView(appRoot, node, {
+      onBack: navigateToPath,
+      onComplete: handleComplete,
+    });
+    return;
+  }
+
   if (node.type === "quiz") {
     renderQuizView(appRoot, node, {
       onBack: navigateToPath,
@@ -209,6 +219,13 @@ navShopBtn.addEventListener("click", () => {
       });
       return appState;
     },
+  });
+});
+
+navGuideBtn.addEventListener("click", () => {
+  soundFX.playClick();
+  showCheatSheetModal({
+    onInsertSnippet: activeViewHandle?.insertSnippet || null,
   });
 });
 

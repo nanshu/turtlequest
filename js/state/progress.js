@@ -137,8 +137,14 @@ export function recordLessonCompletion(
 export function isLessonUnlocked(state, lessonId, orderedLessonIds) {
   const idx = orderedLessonIds.indexOf(lessonId);
   if (idx <= 0) return true;
+  if (state.completedLessons?.[lessonId]?.passed) return true;
   const prevId = orderedLessonIds[idx - 1];
-  return Boolean(state.completedLessons?.[prevId]?.passed);
+  if (state.completedLessons?.[prevId]?.passed) return true;
+  // Backwards compatibility: if a later lesson is already completed (e.g. after inserting new tutorial nodes), keep earlier nodes unlocked
+  for (let i = idx + 1; i < orderedLessonIds.length; i++) {
+    if (state.completedLessons?.[orderedLessonIds[i]]?.passed) return true;
+  }
+  return false;
 }
 
 export function buyOrEquipSkin(state, skinId) {
