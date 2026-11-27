@@ -118,9 +118,16 @@ def _tq_analyze_ast(tree):
         "hasWhile": False,
         "hasDef": False,
         "hasIf": False,
+        "hasElifOrElse": False,
+        "hasModulo": False,
         "hasImportTurtle": False,
+        "hasImportRandom": False,
         "hasPrint": False,
         "hasInput": False,
+        "hasRecursiveDef": False,
+        "defNames": [],
+        "defParamCounts": {},
+        "defCallCounts": {},
         "varNames": [],
         "turtleVarNames": [],
         "callNames": [],
@@ -130,12 +137,17 @@ def _tq_analyze_ast(tree):
     var_set = set()
     turtle_var_set = set()
     call_set = set()
+    def_names = []
+    def_param_counts = {}
+    all_name_calls = {}
 
-    def walk_loop(node, depth):
+    def walk_loop(node, depth, current_fn=None):
         is_loop = isinstance(node, (ast.For, ast.AsyncFor, ast.While))
         next_depth = depth + 1 if is_loop else depth
         if next_depth > info["maxLoopNesting"]:
             info["maxLoopNesting"] = next_depth
+
+        next_fn = current_fn
 
         if isinstance(node, (ast.For, ast.AsyncFor)):
             info["hasFor"] = True
@@ -152,15 +164,26 @@ def _tq_analyze_ast(tree):
             info["hasWhile"] = True
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             info["hasDef"] = True
+            def_names.append(node.name)
+            def_param_counts[node.name] = len(node.args.args)
+            next_fn = node.name
         elif isinstance(node, ast.If):
             info["hasIf"] = True
+            if node.orelse:
+                info["hasElifOrElse"] = True
+        elif isinstance(node, ast.Mod):
+            info["hasModulo"] = True
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name == "turtle":
                     info["hasImportTurtle"] = True
+                elif alias.name == "random":
+                    info["hasImportRandom"] = True
         elif isinstance(node, ast.ImportFrom):
             if node.module == "turtle":
                 info["hasImportTurtle"] = True
+            elif node.module == "random":
+                info["hasImportRandom"] = True
         elif isinstance(node, ast.Assign):
             is_turtle = _tq_is_turtle_ctor(node.value)
             for t in node.targets:
@@ -173,18 +196,25 @@ def _tq_analyze_ast(tree):
                 _tq_collect_target_names(node.target, turtle_var_set)
         elif isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name):
-                call_set.add(node.func.id)
-                if node.func.id == "print":
+                fname = node.func.id
+                call_set.add(fname)
+                all_name_calls[fname] = all_name_calls.get(fname, 0) + 1
+                if current_fn is not None and fname == current_fn:
+                    info["hasRecursiveDef"] = True
+                if fname == "print":
                     info["hasPrint"] = True
-                elif node.func.id == "input":
+                elif fname == "input":
                     info["hasInput"] = True
             elif isinstance(node.func, ast.Attribute):
                 call_set.add(node.func.attr)
 
         for child in ast.iter_child_nodes(node):
-            walk_loop(child, next_depth)
+            walk_loop(child, next_depth, next_fn)
 
-    walk_loop(tree, 0)
+    walk_loop(tree, 0, None)
+    info["defNames"] = sorted(set(def_names))
+    info["defParamCounts"] = def_param_counts
+    info["defCallCounts"] = {fn: all_name_calls.get(fn, 0) for fn in info["defNames"]}
     info["varNames"] = sorted(var_set)
     info["turtleVarNames"] = sorted(turtle_var_set)
     info["callNames"] = sorted(call_set)
@@ -214,10 +244,18 @@ def _tq_run(code):
         "hasWhile": False,
         "hasDef": False,
         "hasIf": False,
+        "hasElifOrElse": False,
+        "hasModulo": False,
         "hasImportTurtle": False,
+        "hasImportRandom": False,
         "hasPrint": False,
         "hasInput": False,
+        "hasRecursiveDef": False,
+        "defNames": [],
+        "defParamCounts": {},
+        "defCallCounts": {},
         "varNames": [],
+        "turtleVarNames": [],
         "callNames": [],
         "maxLoopNesting": 0,
         "forRanges": [],

@@ -242,6 +242,15 @@
 .unit-banner.theme-purple {
   background: linear-gradient(135deg, #a568cc, #8549b0);
 }
+.unit-banner.theme-orange {
+  background: linear-gradient(135deg, #ff9600, #d97706);
+}
+.unit-banner.theme-teal {
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+.unit-banner.theme-coral {
+  background: linear-gradient(135deg, #ff4b4b, #dc2626);
+}
 
 .unit-eyebrow {
   font-size: 0.76rem;
@@ -348,6 +357,21 @@
   background: var(--purple);
   color: #ffffff;
   box-shadow: 0 7px 0 var(--purple-dark);
+}
+.node-btn.unit-orange {
+  background: var(--orange);
+  color: #ffffff;
+  box-shadow: 0 7px 0 var(--orange-dark);
+}
+.node-btn.unit-teal {
+  background: #14b8a6;
+  color: #ffffff;
+  box-shadow: 0 7px 0 #0f766e;
+}
+.node-btn.unit-coral {
+  background: var(--coral);
+  color: #ffffff;
+  box-shadow: 0 7px 0 var(--coral-dark);
 }
 
 .node-btn.completed {

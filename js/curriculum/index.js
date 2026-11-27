@@ -2,6 +2,9 @@ import { CHEAT_SHEET_SECTIONS, LESSON_TUTORIALS, UNIT_TUTORIAL_NODES } from "./t
 import { UNIT_1, UNIT_1_NODES } from "./unit1-basics.js";
 import { UNIT_2, UNIT_2_NODES } from "./unit2-loops.js";
 import { UNIT_3, UNIT_3_NODES } from "./unit3-vars-math.js";
+import { UNIT_4, UNIT_4_NODES } from "./unit4-functions.js";
+import { UNIT_5, UNIT_5_NODES } from "./unit5-logic.js";
+import { UNIT_6, UNIT_6_NODES } from "./unit6-capstone.js";
 
 function attachTutorials(nodes) {
   return nodes.map((node) =>
@@ -11,7 +14,7 @@ function attachTutorials(nodes) {
   );
 }
 
-export const UNITS = [UNIT_1, UNIT_2, UNIT_3];
+export const UNITS = [UNIT_1, UNIT_2, UNIT_3, UNIT_4, UNIT_5, UNIT_6];
 
 export const ALL_NODES = [
   UNIT_TUTORIAL_NODES.unit1,
@@ -20,6 +23,12 @@ export const ALL_NODES = [
   ...attachTutorials(UNIT_2_NODES),
   UNIT_TUTORIAL_NODES.unit3,
   ...attachTutorials(UNIT_3_NODES),
+  UNIT_TUTORIAL_NODES.unit4,
+  ...attachTutorials(UNIT_4_NODES),
+  UNIT_TUTORIAL_NODES.unit5,
+  ...attachTutorials(UNIT_5_NODES),
+  UNIT_TUTORIAL_NODES.unit6,
+  ...attachTutorials(UNIT_6_NODES),
 ];
 
 export const ORDERED_NODE_IDS = ALL_NODES.map((n) => n.id);
@@ -90,6 +99,33 @@ for i in range(42):
     t.pencolor(colors[i % len(colors)])
     t.forward(6 + i * 4)
     t.right(61)
+`,
+  },
+  {
+    id: "tree",
+    name: "Recursive Fractal Tree",
+    code: `import turtle
+
+t = turtle.Turtle()
+t.pensize(3)
+
+def draw_branch(length):
+    if length < 14:
+        return
+    t.pencolor("green" if length < 28 else "brown")
+    t.forward(length)
+    t.left(26)
+    draw_branch(length * 0.72)
+    t.right(52)
+    draw_branch(length * 0.72)
+    t.left(26)
+    t.backward(length)
+
+t.penup()
+t.goto(0, -155)
+t.setheading(90)
+t.pendown()
+draw_branch(80)
 `,
   },
   {

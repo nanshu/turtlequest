@@ -127,6 +127,129 @@ print("Perimeter:", sides * length)  # Shows: Perimeter: 450`,
       },
     ],
   },
+
+  unit4: {
+    id: "u4-t0",
+    unitId: "unit4",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Build Your Own Commands (`def`)",
+    subtitle: "Functions, parameters, & star-polygon math",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • What Is a Function?",
+        title: "Teach Python a Brand-New Word!",
+        body: "Python already knows `t.forward()` and `t.right()`. With **`def`** (short for **define**), you can invent YOUR OWN command—like `draw_square(size)` or `draw_star(size)`—and reuse it anywhere!",
+        diagram: "def-anatomy",
+        code: `def draw_square(size):     # 1. Teach Python the recipe
+    for i in range(4):
+        t.forward(size)
+        t.right(90)
+
+draw_square(50)            # 2. Call it anytime!
+draw_square(100)           # 3. Call it again at a new size!`,
+        callout: "Important rule: writing `def ...` only *teaches* Python the recipe—nothing draws until you actually **call** it like `draw_square(50)`!",
+      },
+      {
+        badge: "Step 2 • Parameters",
+        title: "Multi-Dial Functions (`sides, size`)",
+        body: "Variables listed inside `(...)` on the `def` line are called **parameters**—they act like adjustable dials! Separate multiple parameters with a comma:",
+        code: `def draw_polygon(sides, size):
+    angle = 360 / sides
+    for i in range(sides):
+        t.forward(size)
+        t.right(angle)
+
+draw_polygon(3, 80)   # Triangle!
+draw_polygon(6, 55)   # Hexagon!`,
+        callout: "One 5-line function can now draw triangles, squares, pentagons, hexagons, octagons—every regular polygon!",
+      },
+      {
+        badge: "Step 3 • Interactive Star Math Explorer",
+        title: "Why 5-Point Stars Turn `144°`!",
+        body: "A regular polygon makes **1** full `360°` spin (`360 ÷ sides`). A sharp star leaps across the circle and makes **2 or 3** full spins (`360 × skip ÷ points`)!\n\nTap the star presets below to explore star-polygon math:",
+        widget: "star-explorer",
+        callout: "Check `5` points skipping `2`: `2 × 360° = 720°`, and `720° ÷ 5 = 144°`!",
+      },
+    ],
+  },
+
+  unit5: {
+    id: "u5-t0",
+    unitId: "unit5",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Decisions (`if`), `%` & `random`",
+    subtitle: "Teach Python to choose, check remainders, & roll dice",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • Making Choices",
+        title: "Branching Paths with `if / elif / else`",
+        body: "An **`if`** statement lets Python ask a Yes/No question and choose what to run:\n• `==` checks **is equal to?** (remember: TWO equals signs!)\n• `<` less than • `>` greater than • `!=` not equal\n\nUse `elif` (\"else if\") for extra choices and `else:` as the fallback!",
+        code: `if sides < 3:
+    print("Too few sides!")
+elif sides == 4:
+    print("Square time!")
+else:
+    print("Awesome polygon!")`,
+        callout: "Just like `for`, every `if`, `elif`, and `else` line ends with a colon `:` and indents its body by 4 spaces!",
+      },
+      {
+        badge: "Step 2 • The Remainder Operator (`%`)",
+        title: "Modulo (`%`) = Division Remainder!",
+        body: "In Singapore Math, `7 ÷ 2 = 3` remainder **`1`**. Python's **`%`** operator gives you that remainder directly: `7 % 2` equals **`1`**, while `8 % 2` equals **`0`**!\n\nThat makes alternating patterns super easy: `i % 2 == 0` is True for every **even** lap (`0, 2, 4, 6...`) and False for every **odd** lap (`1, 3, 5, 7...`).",
+        code: `if i % 2 == 0:
+    t.pencolor("teal")   # Even laps: 0, 2, 4, 6
+else:
+    t.pencolor("gold")   # Odd laps: 1, 3, 5, 7`,
+        callout: "Want a 3-color pattern? Check `i % 3`—the remainders always cycle `0, 1, 2, 0, 1, 2...`!",
+      },
+      {
+        badge: "Step 3 • Interactive Modulo & Random Lab",
+        title: "Test Remainders & `random` Live!",
+        body: "Toggle `i % 2`, `i % 3`, or `i % 4` below to see how remainders paint repeating stripes—and roll `random.randint()` to see chance in action!",
+        widget: "modulo-random",
+        callout: "Remember `import random` at the top of your file whenever you use `random.randint(a, b)` or `random.choice(list)`!",
+      },
+    ],
+  },
+
+  unit6: {
+    id: "u6-t0",
+    unitId: "unit6",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Boss Patterns, `while` & Recursion",
+    subtitle: "How fractal trees, clocks, & playable games work",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • `while` Loops",
+        title: "Repeat Until a Condition Changes",
+        body: "Use a `for` loop when you know the exact count (like `range(12)` for 12 clock hours). Use a **`while` loop** when you don't know how many tries something will take—like guessing a secret number!",
+        code: `while guess != secret:
+    guess = int(input("Try a number: "))
+print("You cracked the code!")`,
+        callout: "Always make sure something *inside* the `while` loop changes the condition so it stops eventually!",
+      },
+      {
+        badge: "Step 2 • Recursion",
+        title: "A Function That Calls Itself!",
+        body: "Look at a real tree: a trunk splits into 2 smaller branches, and each branch splits into 2 even smaller branches! In Python, a function can call **itself** with a smaller number (`length * 0.7`)—that's called **recursion**.\n\nEvery recursive function MUST start with a **base case** (`if length < 15: return`) so it stops shrinking!",
+        diagram: "recursion-diagram",
+        callout: "Base case = the emergency brake that prevents infinite recursion!",
+      },
+      {
+        badge: "Step 3 • Interactive Fractal Tree Lab",
+        title: "Grow a Recursive Tree Live!",
+        body: "Drag the **Levels** and **Branch Angle** sliders below to see how one tiny recursive function builds an entire forest canopy:",
+        widget: "tree-explorer",
+        callout: "You're ready for the 4 Boss Missions—let's build a Clock, a Fractal Tree, a Playable Game, and your own Crest!",
+      },
+    ],
+  },
 };
 
 /**
@@ -290,6 +413,142 @@ t.dot(14, "gold")  # Drop a bright star dot!`,
       tip: "If you go to all 4 corners and finish back at `(100, 80)`, you connect a giant rectangle across all 4 quadrants and earn the ⭐ Bonus Star!",
     },
   ],
+  "u4-l1": [
+    {
+      title: "Defining vs. Calling a Function",
+      body: "The indented block under `def draw_square(size):` teaches Python the recipe. Then, back at **0 spaces** of indentation, you can call `draw_square(60)` and `draw_square(110)` as many times as you want!",
+      code: `def draw_square(size):
+    for i in range(4):
+        t.forward(size)
+        t.right(90)
+
+draw_square(60)
+draw_square(110)`,
+      tip: "Notice `for i in range(4):` inside `def` has **4 spaces**, and lines inside the `for` loop have **8 spaces**!",
+    },
+  ],
+  "u4-l2": [
+    {
+      title: "Cracking the 144° Star Angle",
+      body: "To weave a 5-point star, the turtle goes around **TWO full circles** (`2 × 360° = 720°`) across 5 corners:\n`720° ÷ 5 = 144°` per turn!",
+      code: `def draw_star(size):
+    for i in range(5):
+        t.forward(size)
+        t.right(144)`,
+      tip: "Try `t.begin_fill()` before `draw_star(150)` and `t.end_fill()` after to paint a glowing golden star!",
+    },
+  ],
+  "u4-l3": [
+    {
+      title: "Passing 2 Parameters (`sides, size`)",
+      body: "Separate parameters with a comma inside `def draw_polygon(sides, size):`. When you call `draw_polygon(6, 55)`, Python sets `sides = 6` and `size = 55` automatically!",
+      code: `draw_polygon(3, 80)   # 3-sided triangle (120° turns)
+draw_polygon(6, 55)   # 6-sided hexagon (60° turns)`,
+      tip: "Use `t.penup()` and `t.goto(x, y)` between calls so your shapes sit cleanly side-by-side!",
+    },
+  ],
+  "u4-l4": [
+    {
+      title: "Stamping a Row × Column Grid",
+      body: "Nested loops build 2D grids naturally: the outer loop picks the `row` (up/down `y`), and the inner loop walks across each `col` (left/right `x`) calling your helper function `draw_tile(x, y, size)`!",
+      code: `for row in range(3):
+    for col in range(3):
+        x = -90 + col * 65
+        y = 70 - row * 65
+        draw_tile(x, y, 50)`,
+      tip: "Want checkerboard colors? Try `if (row + col) % 2 == 0:` or pick from a list of colors!",
+    },
+  ],
+  "u5-l1": [
+    {
+      title: "Alternating Colors with `i % 2 == 0`",
+      body: "Inside a loop, `i % 2` gives `0` on even steps (`0, 2, 4, 6`) and `1` on odd steps (`1, 3, 5, 7`). Combine it with `if / else` to flip colors automatically!",
+      code: `if i % 2 == 0:
+    t.pencolor("teal")
+else:
+    t.pencolor("gold")`,
+      tip: "For the ⭐ Bonus Star, change `range(8)` to `range(9)` and use `i % 3 == 0` / `elif i % 3 == 1` / `else` for 3 colors!",
+    },
+  ],
+  "u5-l2": [
+    {
+      title: "Turning `input()` Text Into a Number",
+      body: "When Python runs `input(...)`, a popup asks you to type an answer. Because `input()` always returns **text** (like `\"6\"`), wrap it in `int(...)` so Python can divide `360 / sides`!",
+      code: `sides = int(input("How many sides? "))
+angle = 360 / sides`,
+      tip: "Adding `if sides < 3: sides = 3` protects your program if someone types `1` or `2`!",
+    },
+  ],
+  "u5-l3": [
+    {
+      title: "Generating Random Coordinates & Colors",
+      body: "After `import random`, you get two awesome tools:\n• `random.randint(-220, 220)` picks a random whole number in that range.\n• `random.choice(colors)` picks a random item from a list!",
+      code: `x = random.randint(-220, 220)
+y = random.randint(-170, 170)
+t.goto(x, y)
+t.dot(random.randint(6, 16), random.choice(colors))`,
+      tip: "Call `turtle.bgcolor(\"navy\")` at the top so your random stars shine against a dark sky!",
+    },
+  ],
+  "u5-l4": [
+    {
+      title: "Random Walks & Safety Fences",
+      body: "Pick a random heading (`random.choice([0, 90, 180, 270])`) every step! Use `t.distance(0, 0)` to measure how far the turtle wandered from center, and `t.towards(0, 0)` to point it straight back home if it crosses the fence.",
+      code: `if t.distance(0, 0) > 150:
+    t.setheading(t.towards(0, 0))
+    t.forward(40)`,
+      tip: "Look at the console output—run it 3 times and compare how far from `(0, 0)` each random walk finishes!",
+    },
+  ],
+  "u6-l1": [
+    {
+      title: "Clock Compass Math (`30°` per Hour)",
+      body: "A clock splits `360°` into `12` equal slices of `30°`. Since North (12 o'clock) is heading `90°`, hour `h` points at heading `90 - h * 30`:\n• 12 o'clock (`h=0`) → `90°`\n• 3 o'clock (`h=3`) → `0°`\n• 6 o'clock (`h=6`) → `-90°` (`270°`)",
+      code: `for hour in range(12):
+    t.penup()
+    t.home()
+    t.setheading(90 - hour * 30)
+    t.forward(115)
+    t.dot(10, "navy")`,
+      tip: "Draw your hour hand shorter & thicker (`pensize(6)`, `forward(65)`) and your minute hand longer (`pensize(4)`, `forward(95)`)!",
+    },
+  ],
+  "u6-l2": [
+    {
+      title: "Growing Both Left & Right Sub-Trees",
+      body: "Inside `draw_branch(length)`:\n1. Check the **base case**: `if length < 15: return`.\n2. Walk forward `length`, turn left `28°`, and call `draw_branch(length * 0.7)`.\n3. Turn right `56°` (`28 + 28`) and call `draw_branch(length * 0.7)` again for the right side.\n4. Turn left `28°` and walk `backward(length)` so the turtle returns cleanly to the fork!",
+      code: `t.left(28)
+draw_branch(length * 0.7)
+t.right(56)
+draw_branch(length * 0.7)
+t.left(28)
+t.backward(length)`,
+      tip: "Switch speed to **Fast** or **Instant** to watch the whole fractal canopy bloom!",
+    },
+  ],
+  "u6-l3": [
+    {
+      title: "Combining a `while` Game Loop + Turtle Art",
+      body: "First, run `while guess != secret:` to keep asking until the player guesses right. The moment the `while` loop ends, Python moves down to the Victory Turtle section and celebrates on canvas!",
+      code: `while guess != secret:
+    guess = int(input("Guess (1-10): "))
+    if guess < secret:
+        print("Too low!")
+    elif guess > secret:
+        print("Too high!")`,
+      tip: "Click **▶ Run Code** and beat your own game—start at `5` to use binary search!",
+    },
+  ],
+  "u6-l4": [
+    {
+      title: "Designing Your Own Master Crest",
+      body: "This is your open creative capstone! Layer elements cleanly from back to front:\n1. Background (`turtle.bgcolor(...)`)\n2. Shield or flag frame (`begin_fill()` / `end_fill()`)\n3. Reusable `def` emblems (stars, polygons, corner dots)\n4. Bold title banner (`t.write(\"YOUR NAME\", align=\"center\")`)",
+      code: `t.penup()
+t.goto(0, -145)
+t.write("MY CREST", align="center", font=("Arial", 20, "bold"))`,
+      tip: "Once you love your crest, copy the code into the **🎨 Sandbox** and click **📸 Save PNG** to keep a picture of it!",
+    },
+  ],
 };
 
 export const CHEAT_SHEET_SECTIONS = [
@@ -335,14 +594,15 @@ export const CHEAT_SHEET_SECTIONS = [
   },
   {
     id: "python",
-    label: "🐍 Loops & Math",
+    label: "🐍 Loops, Functions & Logic",
     items: [
       { code: "import turtle\nt = turtle.Turtle()", desc: "The 2 setup lines at the top of every turtle script" },
       { code: "for i in range(4):\n    t.forward(100)\n    t.right(90)", desc: "Repeat indented lines 4 times (`i` counts `0, 1, 2, 3`)" },
-      { code: "sides = 6\nangle = 360 / sides", desc: "Store numbers in variables and calculate exterior turn angles" },
-      { code: 'print("Angle:", angle)', desc: "Display words or math answers in the dark Console box" },
-      { code: 'name = input("Your name? ")', desc: "Pop up a question box and store what the user types" },
-      { code: "a + b, a - b, a * b, a / b", desc: "Add (`+`), subtract (`-`), multiply (`*`), divide (`/`)" },
+      { code: "def draw_polygon(sides, size):\n    for i in range(sides):\n        t.forward(size)\n        t.right(360 / sides)", desc: "Define your own reusable command with parameters (`def`)" },
+      { code: "if i % 2 == 0:\n    t.pencolor(\"teal\")\nelse:\n    t.pencolor(\"gold\")", desc: "Make decisions (`if / elif / else`) and check even/odd remainders (`%`)" },
+      { code: "while guess != secret:\n    guess = int(input(\"Guess: \"))", desc: "Repeat until a condition becomes False (`while` loop)" },
+      { code: "import random\nx = random.randint(-150, 150)\nc = random.choice([\"red\", \"gold\"])", desc: "Pick random numbers or random items from a list" },
+      { code: 'print("Angle:", 360 / 5)', desc: "Display words or math answers in the dark Console box" },
     ],
   },
   {

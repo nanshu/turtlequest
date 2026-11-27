@@ -160,7 +160,7 @@ export function showVictoryModal({
         ${
           hasNext
             ? `<button id="victory-next-btn" class="btn btn-green" type="button">Next Mission ➜</button>`
-            : `<button id="victory-next-btn" class="btn btn-purple" type="button">🎉 You Finished Units 1–3! Back to Path</button>`
+            : `<button id="victory-next-btn" class="btn btn-purple" type="button">🏆 You Mastered All 6 Units! Back to Path</button>`
         }
         <div style="display:flex; gap:10px; justify-content:center;">
           <button id="victory-tinker-btn" class="btn btn-ghost btn-sm" type="button">Keep Tinkering</button>

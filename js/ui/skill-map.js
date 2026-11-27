@@ -90,9 +90,9 @@ export function renderSkillMap(container, state, { onOpenNode, onOpenSandbox }) 
       ${unitsHtml}
 
       <div class="coming-soon-banner">
-        <h3>🚀 Coming Next: Units 4–6 (Functions, Star Math &amp; Mini-Games)</h3>
+        <h3>🏆 Complete 6-Unit Python + Turtle Adventure</h3>
         <p style="margin:0;">
-          Finish Units 1–3 and experiment with 5-point stars, spirals, and interactive drawings in the Free-Draw Sandbox!
+          Master angles, loops, variables, functions, logic, recursion, and mini-games—then build your own creations anytime in the Free-Draw Sandbox!
         </p>
       </div>
     </div>

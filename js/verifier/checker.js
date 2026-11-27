@@ -218,6 +218,52 @@ export function extractPrintedNumbers(stdout) {
   return matches ? matches.map(Number) : [];
 }
 
+export function isStarPolygon(
+  path,
+  points,
+  skip = 2,
+  { minSide = 35, maxSide = 450, sideTol = 0.08, angleTol = 5.0 } = {}
+) {
+  if (!isClosedPath(path, 5.5)) return false;
+  if (path.edges.length !== points) return false;
+
+  const lengths = pathEdgeLengths(path);
+  const avgLen = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  if (avgLen < minSide || avgLen > maxSide) return false;
+
+  const lengthsOk = lengths.every((len) => Math.abs(len - avgLen) <= avgLen * sideTol + 1.5);
+  if (!lengthsOk) return false;
+
+  const signedTurns = pathExteriorAngles(path);
+  if (signedTurns.length !== points) return false;
+
+  const firstSign = Math.sign(signedTurns[0]);
+  if (firstSign === 0) return false;
+  if (!signedTurns.every((a) => Math.sign(a) === firstSign)) return false;
+
+  const expectedExt = (360 * skip) / points;
+  return signedTurns.every((a) => Math.abs(Math.abs(a) - expectedExt) <= angleTol);
+}
+
+export function countColorTransitions(segments) {
+  const nonZero = (segments || []).filter((s) => segmentLength(s) > 0.5);
+  let transitions = 0;
+  for (let i = 1; i < nonZero.length; i++) {
+    const prev = String(nonZero[i - 1].color || "").toLowerCase();
+    const curr = String(nonZero[i].color || "").toLowerCase();
+    if (prev !== curr) transitions += 1;
+  }
+  return transitions;
+}
+
+export function countWrites(commands) {
+  return (commands || []).filter((c) => c.cmd === "write").length;
+}
+
+export function countStamps(commands) {
+  return (commands || []).filter((c) => c.cmd === "stamp").length;
+}
+
 export const VERIFY_HELPERS = {
   segmentLength,
   pointsClose,
@@ -226,12 +272,16 @@ export const VERIFY_HELPERS = {
   pathEdgeLengths,
   pathExteriorAngles,
   isRegularPolygon,
+  isStarPolygon,
   boundingBox,
   countDistinctColors,
+  countColorTransitions,
   hasCustomColor,
   visitedQuadrants,
   countFills,
   countDots,
+  countWrites,
+  countStamps,
   hasPenUpJump,
   extractPrintedNumbers,
 };
