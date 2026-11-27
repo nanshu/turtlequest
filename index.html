@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TurtleQuest — Python &amp; Turtle Adventures</title>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "codemirror": "https://esm.sh/codemirror@6.0.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3",
+        "@codemirror/state": "https://esm.sh/@codemirror/state@6.4.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3",
+        "@codemirror/view": "https://esm.sh/@codemirror/view@6.34.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3",
+        "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.7.1?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3",
+        "@codemirror/language": "https://esm.sh/@codemirror/language@6.10.3?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3",
+        "@codemirror/lang-python": "https://esm.sh/@codemirror/lang-python@6.1.6?deps=@codemirror/state@6.4.1,@codemirror/view@6.34.1,@codemirror/language@6.10.3"
+      }
+    }
+  </script>
+
+  <link rel="stylesheet" href="./css/theme.css" />
+  <link rel="stylesheet" href="./css/layout.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button id="brand-home-btn" class="brand-btn" type="button" title="Go to Skill Path">
+          <span class="brand-logo" aria-hidden="true">🐢</span>
+          <span class="brand-title">TurtleQuest</span>
+        </button>
+
+        <nav class="main-nav" aria-label="Primary Navigation">
+          <button id="nav-path" class="nav-pill active" type="button">🗺️ Skill Path</button>
+          <button id="nav-sandbox" class="nav-pill" type="button">🎨 Sandbox</button>
+          <button id="nav-shop" class="nav-pill" type="button">🛍️ Turtle Shop</button>
+        </nav>
+      </div>
+
+      <div class="top-bar-right">
+        <div class="py-status-badge booting" id="py-status-badge" title="Python WebAssembly Engine">
+          <span class="status-dot"></span>
+          <span id="py-status-text">Waking up Python...</span>
+        </div>
+
+        <div class="daily-goal-pill" title="Daily XP Goal">
+          <span class="daily-label" id="daily-xp-text">0 / 50 XP today</span>
+          <div class="daily-bar-track">
+            <div class="daily-bar-fill" id="daily-xp-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="stat-pill streak-pill" title="Streak (includes 2-day weekend freeze)">
+          <span>🔥</span>
+          <span id="stat-streak">0</span>
+        </div>
+
+        <div class="stat-pill xp-pill" title="Total XP">
+          <span>⚡</span>
+          <span id="stat-xp">0</span>
+        </div>
+
+        <div class="stat-pill gem-pill" title="Shell Gems">
+          <span>💎</span>
+          <span id="stat-gems">0</span>
+        </div>
+
+        <button id="sound-toggle-btn" class="icon-btn" type="button" title="Toggle Sound Effects" aria-label="Toggle Sound Effects">
+          🔊
+        </button>
+
+        <button id="backup-btn" class="icon-btn" type="button" title="Export or Import Save File" aria-label="Backup Progress">
+          💾
+        </button>
+      </div>
+    </header>
+
+    <main id="app-root" class="app-main"></main>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
