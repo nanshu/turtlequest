@@ -48,10 +48,30 @@ export class PythonRunner {
       this._drainKillTimer = null;
     }
 
-    const worker = new Worker(new URL("./pyodide-worker.js", import.meta.url), {
-      type: "module",
-    });
+    const worker = new Worker(new URL("./pyodide-worker.js", import.meta.url));
     this.worker = worker;
+
+    const slowBootTimer = setTimeout(() => {
+      if (this.worker === worker && !this.ready) {
+        this.onStatusChange("booting", "Downloading Python...");
+      }
+    }, 5000);
+
+    const bootTimeoutTimer = setTimeout(() => {
+      if (this.worker === worker && !this.ready) {
+        this.ready = false;
+        this.readyPromise = null;
+        this.onStatusChange("error", "Python Timeout");
+        if (rejectReady) {
+          rejectReady(new Error("Python took too long to download from jsDelivr. Please check your connection and refresh."));
+        }
+      }
+    }, 30000);
+
+    const clearBootTimers = () => {
+      clearTimeout(slowBootTimer);
+      clearTimeout(bootTimeoutTimer);
+    };
 
     const initMsg = { type: "init" };
     if (this.supportsSAB) {
@@ -73,6 +93,7 @@ export class PythonRunner {
       if (!msg) return;
 
       if (msg.type === "ready") {
+        clearBootTimers();
         this.ready = true;
         this.onStatusChange(
           "ready",
@@ -83,6 +104,7 @@ export class PythonRunner {
       }
 
       if (msg.type === "init_error") {
+        clearBootTimers();
         this.ready = false;
         this.readyPromise = null;
         this.onStatusChange("error", "Python Offline");
@@ -125,6 +147,7 @@ export class PythonRunner {
 
     worker.onerror = (err) => {
       if (this.worker !== worker) return;
+      clearBootTimers();
       this.ready = false;
       this.readyPromise = null;
       this.onStatusChange("error", "Python Error");

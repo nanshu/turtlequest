@@ -1,4 +1,4 @@
-import { loadPyodide } from "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs";
+/* Classic Web Worker for maximum browser compatibility (Chrome, Safari, Firefox) */
 
 let pyodide = null;
 let interruptView = null;
@@ -269,6 +269,9 @@ def _tq_run(code):
 `;
 
 async function initializeWorker(msg) {
+  if (typeof loadPyodide !== "function") {
+    importScripts("https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js");
+  }
   pyodide = await loadPyodide({
     indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/",
   });
@@ -282,7 +285,7 @@ async function initializeWorker(msg) {
     inputDataView = new Uint8Array(msg.inputDataBuffer);
   }
 
-  const shimUrl = new URL("../turtle/py-turtle-shim.py", import.meta.url);
+  const shimUrl = new URL("../turtle/py-turtle-shim.py", self.location.href);
   const shimResp = await fetch(shimUrl);
   if (!shimResp.ok) {
     throw new Error(`Failed to fetch turtle shim (${shimResp.status})`);
