@@ -243,10 +243,10 @@ backupBtn.addEventListener("click", () => {
   showBackupModal({
     state: appState,
     onImportState(jsonText) {
-      // Unmount current editor without flushing stale draft back into localStorage
-      unmountCurrentView({ saveDraft: false });
       const res = importStateJSON(jsonText);
       if (res.ok) {
+        // Unmount active editor without flushing stale pre-import draft back over imported state
+        unmountCurrentView({ saveDraft: false });
         appState = res.state;
         soundFX.setMuted(appState.soundMuted);
         syncHeaderStats();

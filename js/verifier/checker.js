@@ -95,19 +95,87 @@ export function pathEdgeLengths(path) {
   return (path?.edges || []).map(segmentLength);
 }
 
-export function pathExteriorAngles(path) {
+export function pathExteriorAngles(path, closedTol = 4.5) {
   const edges = path?.edges || [];
   if (edges.length < 2) return [];
   const angles = [];
   for (let i = 0; i < edges.length - 1; i++) {
     angles.push(signedAngleDiffDeg(segmentAngleDeg(edges[i]), segmentAngleDeg(edges[i + 1])));
   }
-  if (isClosedPath(path)) {
+  if (isClosedPath(path, closedTol)) {
     angles.push(
       signedAngleDiffDeg(segmentAngleDeg(edges[edges.length - 1]), segmentAngleDeg(edges[0]))
     );
   }
   return angles;
+}
+
+/**
+ * Splits connected pen-down paths whenever a closed sub-loop finishes (3+ edges
+ * returning to its start point), so touching shapes drawn without `penup()`
+ * (like `draw_square(60); draw_square(110)` from `(0, 0)`) are each recognized!
+ */
+export function splitClosedShapes(segments, options = {}) {
+  const opts =
+    typeof options === "number"
+      ? { tol: options, mergeAngleDeg: 3.0, minSegLen: 0.5, closeTol: 5.0 }
+      : { tol: 2.5, mergeAngleDeg: 3.0, minSegLen: 0.5, closeTol: 5.0, ...options };
+  const closeTol = opts.closeTol ?? 5.0;
+
+  // Use raw non-zero segments split by turtle & jump, then split closed cycles before collinear-merging each shape
+  const nonZero = (segments || []).filter((s) => segmentLength(s) > opts.minSegLen);
+  if (nonZero.length === 0) return [];
+
+  const groups = [];
+  let current = [nonZero[0]];
+  for (let i = 1; i < nonZero.length; i++) {
+    const prev = current[current.length - 1];
+    const seg = nonZero[i];
+    const sameTurtle =
+      prev.turtle_id === undefined || seg.turtle_id === undefined || prev.turtle_id === seg.turtle_id;
+    if (sameTurtle && pointsClose({ x: prev.x2, y: prev.y2 }, { x: seg.x1, y: seg.y1 }, opts.tol)) {
+      current.push(seg);
+    } else {
+      groups.push(current);
+      current = [seg];
+    }
+  }
+  groups.push(current);
+
+  const shapes = [];
+  for (const group of groups) {
+    let segStart = 0;
+    let edgeCount = 0;
+    let lastAngle = null;
+
+    for (let i = 0; i < group.length; i++) {
+      const seg = group[i];
+      const ang = segmentAngleDeg(seg);
+      if (i === segStart) {
+        edgeCount = 1;
+        lastAngle = ang;
+      } else if (Math.abs(signedAngleDiffDeg(lastAngle, ang)) >= opts.mergeAngleDeg) {
+        edgeCount += 1;
+        lastAngle = ang;
+      }
+
+      const startPt = { x: group[segStart].x1, y: group[segStart].y1 };
+      const endPt = { x: seg.x2, y: seg.y2 };
+      if (edgeCount >= 3 && pointsClose(startPt, endPt, closeTol)) {
+        const sub = group.slice(segStart, i + 1);
+        shapes.push(...getConnectedPaths(sub, opts));
+        segStart = i + 1;
+        edgeCount = 0;
+        lastAngle = null;
+      }
+    }
+
+    if (segStart < group.length) {
+      shapes.push(...getConnectedPaths(group.slice(segStart), opts));
+    }
+  }
+
+  return shapes;
 }
 
 export function isRegularPolygon(
@@ -183,7 +251,7 @@ export function visitedQuadrants(segments, commands = []) {
     checkPt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);
   }
   for (const c of commands || []) {
-    if (c.cmd === "dot") checkPt(c.x, c.y);
+    if (c.cmd === "dot" || c.cmd === "stamp") checkPt(c.x, c.y);
   }
   return quads;
 }
@@ -234,7 +302,7 @@ export function isStarPolygon(
   const lengthsOk = lengths.every((len) => Math.abs(len - avgLen) <= avgLen * sideTol + 1.5);
   if (!lengthsOk) return false;
 
-  const signedTurns = pathExteriorAngles(path);
+  const signedTurns = pathExteriorAngles(path, 5.5);
   if (signedTurns.length !== points) return false;
 
   const firstSign = Math.sign(signedTurns[0]);
@@ -268,6 +336,7 @@ export const VERIFY_HELPERS = {
   segmentLength,
   pointsClose,
   getConnectedPaths,
+  splitClosedShapes,
   isClosedPath,
   pathEdgeLengths,
   pathExteriorAngles,

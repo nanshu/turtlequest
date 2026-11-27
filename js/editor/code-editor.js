@@ -201,29 +201,65 @@ export class CodeEditor {
     }
   }
 
+  _buildIndentedInsert(docText, selFrom, selTo, snippet) {
+    const atEnd = selFrom === 0 && selTo === 0 && docText.trim().length > 0;
+    const from = atEnd ? docText.length : selFrom;
+    const to = atEnd ? docText.length : selTo;
+
+    const lineStart = from === 0 ? 0 : docText.lastIndexOf("\n", from - 1) + 1;
+    const nextNl = docText.indexOf("\n", to);
+    const lineEnd = nextNl === -1 ? docText.length : nextNl;
+    const currentLine = docText.slice(lineStart, lineEnd);
+    const indentMatch = currentLine.match(/^([ \t]*)/);
+    const lineIndent = indentMatch ? indentMatch[1] : "";
+
+    const snippetLines = String(snippet).split("\n");
+    const indentedBlock = snippetLines
+      .map((l, idx) => (idx === 0 ? l : l.length > 0 ? `${lineIndent}${l}` : l))
+      .join("\n");
+
+    // Case 1: replacing a non-empty selection
+    if (from !== to) {
+      return { from, to, insert: indentedBlock };
+    }
+
+    // Case 2: cursor is on a whitespace-only line -> keep its existing indentation cleanly
+    if (currentLine.trim().length === 0) {
+      return {
+        from: lineStart,
+        to: lineEnd,
+        insert: `${lineIndent}${indentedBlock}`,
+      };
+    }
+
+    // Case 3: cursor is on a non-empty line -> append cleanly on the next line preserving indent
+    return {
+      from: lineEnd,
+      to: lineEnd,
+      insert: `\n${lineIndent}${indentedBlock}`,
+    };
+  }
+
   insertText(snippet) {
     if (!snippet) return;
     if (this.view) {
       const state = this.view.state;
       const sel = state.selection.main;
       const docText = state.doc.toString();
-      const atEnd = sel.from === 0 && sel.to === 0 && docText.trim().length > 0;
-      const pos = atEnd ? docText.length : sel.from;
-      const prefix = pos > 0 && docText[pos - 1] !== "\n" ? "\n" : "";
-      const toInsert = `${prefix}${snippet}\n`;
+      const edit = this._buildIndentedInsert(docText, sel.from, sel.to, snippet);
       this.view.dispatch({
-        changes: { from: pos, to: atEnd ? pos : sel.to, insert: toInsert },
-        selection: { anchor: pos + toInsert.length },
+        changes: { from: edit.from, to: edit.to, insert: edit.insert },
+        selection: { anchor: edit.from + edit.insert.length },
       });
       this.view.focus();
     } else if (this._textarea) {
       const ta = this._textarea;
       const val = ta.value;
-      const pos = ta.selectionStart || val.length;
-      const prefix = pos > 0 && val[pos - 1] !== "\n" ? "\n" : "";
-      const toInsert = `${prefix}${snippet}\n`;
-      ta.value = `${val.slice(0, pos)}${toInsert}${val.slice(ta.selectionEnd || pos)}`;
-      ta.selectionStart = ta.selectionEnd = pos + toInsert.length;
+      const start = typeof ta.selectionStart === "number" ? ta.selectionStart : val.length;
+      const end = typeof ta.selectionEnd === "number" ? ta.selectionEnd : start;
+      const edit = this._buildIndentedInsert(val, start, end, snippet);
+      ta.value = `${val.slice(0, edit.from)}${edit.insert}${val.slice(edit.to)}`;
+      ta.selectionStart = ta.selectionEnd = edit.from + edit.insert.length;
       ta.focus();
       this.onChange(ta.value);
     }

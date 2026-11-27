@@ -119,7 +119,9 @@ def draw_branch(length):
     t.right(52)
     draw_branch(length * 0.72)
     t.left(26)
+    t.penup()
     t.backward(length)
+    t.pendown()
 
 t.penup()
 t.goto(0, -155)

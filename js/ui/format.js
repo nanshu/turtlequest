@@ -14,6 +14,7 @@ export function formatInlineText(str) {
   let html = escapeHtml(str);
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+  html = html.replace(/\*([^*<]+)\*/g, "<em>$1</em>");
   html = html.replace(/\n/g, "<br />");
   return html;
 }

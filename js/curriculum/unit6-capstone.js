@@ -48,8 +48,9 @@ t.forward(65)
     blueprint: null,
     showGridDefault: false,
     goals: [
-      "Use a `for` loop to place 12 hour marks around all 4 quadrants",
-      "Draw at least 2 clock hands starting near the center `(0, 0)`",
+      "Use a `for` loop",
+      "Place 12+ hour marks around all 4 quadrants",
+      "Draw 2+ distinct clock hands from the center `(0, 0)`",
     ],
     bonusGoal: "Bonus Star: Draw an outer clock ring AND use 2+ colors for your hands!",
     hints: [
@@ -62,35 +63,57 @@ t.forward(65)
       const { segments, commands } = turtleData;
       const usedFor = Boolean(astInfo?.hasFor);
 
-      // Count outer dial marks (dots or outer tick segments with radius >= 50)
+      // Count outer dial marks: dots at r >= 50 OR radial tick segments (aligned radially, NOT tangential circle chords!)
       const outerDots = commands.filter((c) => c.cmd === "dot" && Math.hypot(c.x, c.y) >= 50);
-      const outerTicks = segments.filter(
-        (s) => Math.hypot(s.x1, s.y1) >= 45 && Math.hypot(s.x2, s.y2) >= 55 && h.segmentLength(s) <= 45
-      );
+      const outerTicks = segments.filter((s) => {
+        const len = h.segmentLength(s);
+        if (len < 3 || len > 45) return false;
+        const r1 = Math.hypot(s.x1, s.y1);
+        const r2 = Math.hypot(s.x2, s.y2);
+        if (Math.min(r1, r2) < 45 || Math.max(r1, r2) < 55) return false;
+        const mx = (s.x1 + s.x2) / 2;
+        const my = (s.y1 + s.y2) / 2;
+        const mr = Math.hypot(mx, my) || 1;
+        const dx = (s.x2 - s.x1) / len;
+        const dy = (s.y2 - s.y1) / len;
+        const radialAlignment = Math.abs((dx * mx + dy * my) / mr);
+        return radialAlignment >= 0.72;
+      });
       const dialMarks = outerDots.length + outerTicks.length;
       const quads = h.visitedQuadrants(segments, commands);
 
-      // Hands: segments starting near center (<= 15 px) and extending outward (>= 30 px)
-      const hands = segments.filter(
+      // Hands: segments from center outward, deduplicated by direction so retracing `backward()` counts as 1 hand
+      const handSegs = segments.filter(
         (s) =>
           (Math.hypot(s.x1, s.y1) <= 15 && Math.hypot(s.x2, s.y2) >= 30) ||
           (Math.hypot(s.x2, s.y2) <= 15 && Math.hypot(s.x1, s.y1) >= 30)
       );
+      const distinctHandDirs = [];
+      for (const s of handSegs) {
+        const tipX = Math.hypot(s.x2, s.y2) >= Math.hypot(s.x1, s.y1) ? s.x2 : s.x1;
+        const tipY = Math.hypot(s.x2, s.y2) >= Math.hypot(s.x1, s.y1) ? s.y2 : s.y1;
+        const deg = ((Math.atan2(tipY, tipX) * 180) / Math.PI + 360) % 360;
+        const duplicate = distinctHandDirs.some((d) => {
+          const diff = Math.abs(((deg - d + 540) % 360) - 180);
+          return diff <= 10;
+        });
+        if (!duplicate) distinctHandDirs.push(deg);
+      }
 
-      // Outer ring bonus check: many arc segments at radius >= 90
+      // Outer ring bonus check: tangential arc segments at radius >= 85
       const ringSegs = segments.filter(
         (s) => Math.hypot(s.x1, s.y1) >= 85 && Math.hypot(s.x2, s.y2) >= 85
       );
       const hasOuterRing = ringSegs.length >= 16;
-      const handColors = new Set(hands.map((s) => String(s.color || "").toLowerCase()));
+      const handColors = new Set(handSegs.map((s) => String(s.color || "").toLowerCase()));
       const bonusOk = hasOuterRing && handColors.size >= 2;
 
       const goals = [
         { label: "Use a `for` loop", passed: usedFor },
         { label: `Place 12+ hour marks around all 4 quadrants (${dialMarks} marks)`, passed: dialMarks >= 12 && quads.size === 4 },
-        { label: `Draw 2+ clock hands from center (${hands.length} hands)`, passed: hands.length >= 2 },
+        { label: `Draw 2+ distinct clock hands from center (${distinctHandDirs.length} hands)`, passed: distinctHandDirs.length >= 2 },
       ];
-      const passed = usedFor && dialMarks >= 12 && quads.size === 4 && hands.length >= 2;
+      const passed = usedFor && dialMarks >= 12 && quads.size === 4 && distinctHandDirs.length >= 2;
       let feedback = "Right on time! 12 × 30° = 360° analog clock complete.";
       if (!passed) {
         if (!usedFor) feedback = "Use a `for` loop to stamp the 12 hour marks cleanly!";
@@ -153,11 +176,11 @@ draw_branch(80)
       "Include an `if` base case so recursion stops cleanly",
       "Grow a branching tree with 15+ segments",
     ],
-    bonusGoal: "Bonus Star: Add green leaves (`t.pencolor(\"green\")` when branches are small) OR grow 30+ branches!",
+    bonusGoal: "Bonus Star: Paint green leaf tips on tiny branches (2+ colors on your tree)!",
     hints: [
       "Right under `t.right(56)`, add `draw_branch(length * 0.7)` (indented 4 spaces inside `draw_branch`)!",
       "Try switching speed to **Fast** or **Instant** to see the full fractal tree bloom.",
-      "For leafy green tips, add right before `t.forward(length)`:\n`if length < 28: t.pencolor(\"green\")`\n`else: t.pencolor(\"brown\")`",
+      "For leafy green tips (without repainting the trunk!), add right before `t.forward(length)`:\n`t.pencolor(\"green\" if length < 28 else \"brown\")`\nand lift the pen when walking back:\n`t.penup(); t.backward(length); t.pendown()`",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
@@ -176,7 +199,7 @@ draw_branch(80)
       );
 
       const treeGrown = segments.length >= 15 && box.height >= 60 && angleBuckets.size >= 4;
-      const bonusOk = segments.length >= 30 && h.countDistinctColors(segments) >= 2;
+      const bonusOk = h.countDistinctColors(segments) >= 2;
 
       const goals = [
         { label: "Write a recursive function (`def` calling itself)", passed: recursive },
@@ -234,18 +257,7 @@ t = turtle.Turtle()
 t.pencolor("gold")
 t.fillcolor("gold")
 t.pensize(4)
-t.penup()
-t.goto(-60, 20)
-t.pendown()
-t.begin_fill()
-for i in range(5):
-    t.forward(120)
-    t.right(144)
-t.end_fill()
-t.penup()
-t.goto(0, -90)
-t.pencolor("purple")
-t.write("YOU WIN!", align="center", font=("Arial", 22, "bold"))
+# Draw a victory star (5 sides, 144 deg) or celebration art, then write "YOU WIN!"!
 `,
     blueprint: null,
     showGridDefault: false,
@@ -255,9 +267,9 @@ t.write("YOU WIN!", align="center", font=("Arial", 22, "bold"))
     ],
     bonusGoal: "Bonus Star: Draw a colorful celebration (2+ colors) AND write victory text with `t.write(...)`!",
     hints: [
-      "Click **▶ Run Code** and play your own game! Use binary search (start with `5`) to find the secret number fast.",
-      "Once you guess right, your turtle draws the golden star and writes `YOU WIN!`!",
-      "Try customizing the victory art—draw a starburst, change the range to `1..20`, or print a custom rank based on `tries`!",
+      "After `t.pensize(4)`, add a golden 5-point star:\n`t.begin_fill()`\n`for i in range(5):`\n`    t.forward(120)`\n`    t.right(144)`\n`t.end_fill()`",
+      "Add a victory banner for the Bonus Star:\n`t.penup(); t.goto(0, -100); t.pencolor(\"purple\")`\n`t.write(\"YOU WIN!\", align=\"center\", font=(\"Arial\", 22, \"bold\"))`",
+      "Click **▶ Run Code** and play your own game—use binary search (start at `5`) to crack it fast!",
     ],
     check(runResult, h) {
       const { astInfo, stdout, turtleData } = runResult;
@@ -275,7 +287,9 @@ t.write("YOU WIN!", align="center", font=("Arial", 22, "bold"))
 
       const allColors = new Set([
         ...segments.map((s) => String(s.color || "").toLowerCase()),
-        ...commands.filter((c) => c.cmd === "write" && c.color).map((c) => String(c.color).toLowerCase()),
+        ...commands
+          .filter((c) => (c.cmd === "write" || c.cmd === "dot" || c.cmd === "end_fill") && c.color)
+          .map((c) => String(c.color).toLowerCase()),
       ]);
       const bonusOk = h.countWrites(commands) >= 1 && allColors.size >= 2;
 
@@ -379,14 +393,11 @@ for i in range(6):
     t.right(60)
 t.end_fill()
 
-# 2. Central golden star using your helper function!
-draw_star(-42, 14, 84, "gold")
-
-# 3. Add corner dots/emblems and your custom crest title with t.write(...)!
-t.penup()
-t.goto(0, -145)
-t.pencolor("purple")
-t.write("TURTLE MASTER", align="center", font=("Arial", 20, "bold"))
+# 2. Call draw_star(...) to place your emblem(s), then sign your crest with t.write(...)!
+# Example:
+# draw_star(-42, 14, 84, "gold")
+# t.penup(); t.goto(0, -145); t.pencolor("purple")
+# t.write("TURTLE MASTER", align="center", font=("Arial", 20, "bold"))
 `,
     blueprint: null,
     showGridDefault: false,
@@ -397,9 +408,9 @@ t.write("TURTLE MASTER", align="center", font=("Arial", 20, "bold"))
     ],
     bonusGoal: "Bonus Star: Add `t.dot()` or `t.stamp()` emblems AND span all 4 quadrants!",
     hints: [
-      "Run the starter crest to see how the pieces layer together, then make it 100% YOUR own!",
-      "Try adding 4 corner stars (`draw_star(...)`) or bright `t.dot(16, \"coral\")` gems in all 4 quadrants!",
-      "Change `\"TURTLE MASTER\"` to your own name or team motto!",
+      "Call `draw_star(-42, 14, 84, \"gold\")` to stamp a golden emblem right inside your shield!",
+      "Sign your banner with:\n`t.penup(); t.goto(0, -145); t.pencolor(\"purple\")`\n`t.write(\"MY CREST\", align=\"center\", font=(\"Arial\", 20, \"bold\"))`",
+      "Add 4 corner `t.dot(16, \"coral\")` gems (or `t.stamp()`) in all 4 quadrants to grab the Final Bonus Star!",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;

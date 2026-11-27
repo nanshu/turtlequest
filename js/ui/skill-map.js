@@ -1,6 +1,6 @@
 import { ALL_NODES, ORDERED_NODE_IDS, UNITS } from "../curriculum/index.js";
 import { isLessonUnlocked, TURTLE_SKINS } from "../state/progress.js";
-import { escapeHtml } from "./format.js";
+import { escapeHtml, formatInlineText } from "./format.js";
 
 const WINDING_OFFSETS = [0, 1, 2, 1, 0, 5, 6, 5];
 
@@ -45,15 +45,15 @@ export function renderSkillMap(container, state, { onOpenNode, onOpenSandbox }) 
                 data-node-id="${node.id}"
                 type="button"
                 ${unlocked ? "" : "disabled"}
-                title="${escapeHtml(node.title)}"
+                title="${escapeHtml(node.title.replace(/[`*]/g, ""))}"
               >
                 <span>${unlocked ? node.icon : "🔒"}</span>
                 ${starBadge}
               </button>
             </div>
             <div class="node-label">
-              <div class="node-title">${escapeHtml(node.title)}</div>
-              <div class="node-subtitle">${escapeHtml(node.subtitle)}</div>
+              <div class="node-title">${formatInlineText(node.title)}</div>
+              <div class="node-subtitle">${formatInlineText(node.subtitle)}</div>
             </div>
           </div>
         `;
@@ -66,7 +66,7 @@ export function renderSkillMap(container, state, { onOpenNode, onOpenSandbox }) 
           <div>
             <div class="unit-eyebrow">Unit ${unit.number}</div>
             <h2 class="unit-title">${escapeHtml(unit.title)}</h2>
-            <p class="unit-desc">${escapeHtml(unit.description)}</p>
+            <p class="unit-desc">${formatInlineText(unit.description)}</p>
           </div>
           <div class="unit-progress-pill">${doneInUnit} / ${unitNodes.length} Done</div>
         </div>

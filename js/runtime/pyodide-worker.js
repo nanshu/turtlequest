@@ -128,6 +128,8 @@ def _tq_analyze_ast(tree):
         "defNames": [],
         "defParamCounts": {},
         "defCallCounts": {},
+        "defHasLoop": {},
+        "hasDefCalledInLoop": {},
         "varNames": [],
         "turtleVarNames": [],
         "callNames": [],
@@ -139,6 +141,8 @@ def _tq_analyze_ast(tree):
     call_set = set()
     def_names = []
     def_param_counts = {}
+    def_has_loop = {}
+    called_in_loop = set()
     all_name_calls = {}
 
     def walk_loop(node, depth, current_fn=None):
@@ -151,6 +155,8 @@ def _tq_analyze_ast(tree):
 
         if isinstance(node, (ast.For, ast.AsyncFor)):
             info["hasFor"] = True
+            if current_fn is not None:
+                def_has_loop[current_fn] = True
             if (
                 isinstance(node.iter, ast.Call)
                 and isinstance(node.iter.func, ast.Name)
@@ -162,10 +168,13 @@ def _tq_analyze_ast(tree):
                 info["forRanges"].append(node.iter.args[0].value)
         elif isinstance(node, ast.While):
             info["hasWhile"] = True
+            if current_fn is not None:
+                def_has_loop[current_fn] = True
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             info["hasDef"] = True
             def_names.append(node.name)
             def_param_counts[node.name] = len(node.args.args)
+            def_has_loop.setdefault(node.name, False)
             next_fn = node.name
         elif isinstance(node, ast.If):
             info["hasIf"] = True
@@ -199,6 +208,8 @@ def _tq_analyze_ast(tree):
                 fname = node.func.id
                 call_set.add(fname)
                 all_name_calls[fname] = all_name_calls.get(fname, 0) + 1
+                if depth > 0:
+                    called_in_loop.add(fname)
                 if current_fn is not None and fname == current_fn:
                     info["hasRecursiveDef"] = True
                 if fname == "print":
@@ -215,6 +226,8 @@ def _tq_analyze_ast(tree):
     info["defNames"] = sorted(set(def_names))
     info["defParamCounts"] = def_param_counts
     info["defCallCounts"] = {fn: all_name_calls.get(fn, 0) for fn in info["defNames"]}
+    info["defHasLoop"] = {fn: bool(def_has_loop.get(fn, False)) for fn in info["defNames"]}
+    info["hasDefCalledInLoop"] = {fn: (fn in called_in_loop) for fn in info["defNames"]}
     info["varNames"] = sorted(var_set)
     info["turtleVarNames"] = sorted(turtle_var_set)
     info["callNames"] = sorted(call_set)
@@ -234,10 +247,13 @@ def _tq_input(prompt=""):
         raise _TQNeedInputFallback(getattr(res, "prompt", ""))
     return str(getattr(res, "value", ""))
 
-def _tq_run(code):
+def _tq_run(code, run_seed=None):
     import js
+    import random
     import turtle
     turtle._reset_runtime()
+    if run_seed is not None:
+        random.seed(int(run_seed))
 
     ast_info = {
         "hasFor": False,
@@ -254,6 +270,8 @@ def _tq_run(code):
         "defNames": [],
         "defParamCounts": {},
         "defCallCounts": {},
+        "defHasLoop": {},
+        "hasDefCalledInLoop": {},
         "varNames": [],
         "turtleVarNames": [],
         "callNames": [],
@@ -386,8 +404,9 @@ self.onmessage = async (event) => {
     }
 
     pyodide.globals.set("_tq_user_code", msg.code || "");
+    pyodide.globals.set("_tq_run_seed", msg.runSeed ?? null);
     try {
-      const jsonStr = pyodide.runPython("_tq_run(_tq_user_code)");
+      const jsonStr = pyodide.runPython("_tq_run(_tq_user_code, _tq_run_seed)");
       const parsed = JSON.parse(jsonStr);
       parsed.stdout = stdoutBuffer.join("");
       stdoutBuffer = [];

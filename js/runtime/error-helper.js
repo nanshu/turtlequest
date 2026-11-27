@@ -151,6 +151,17 @@ export function translatePythonError(rawTraceback, code = "") {
     };
   }
 
+  if (lastLine.startsWith("RecursionError") || text.includes("RecursionError")) {
+    return {
+      title: `Infinite Recursion${line ? ` on Line ${line}` : ""}`,
+      explanation:
+        "Your recursive function kept calling itself over and over without stopping!",
+      tip: "Check your **base case** (like `if length < 15: return`) and make sure each recursive call passes a SMALLER number (like `length * 0.7`)!",
+      line,
+      rawTraceback: text,
+    };
+  }
+
   if (text.includes("KeyboardInterrupt")) {
     return {
       title: "Turtle Paused!",

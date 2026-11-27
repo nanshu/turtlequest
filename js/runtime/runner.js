@@ -18,8 +18,21 @@ export class PythonRunner {
     this.activeRun = null;
     this._drainingRunId = null;
     this._drainKillTimer = null;
+    this._slowBootTimer = null;
+    this._bootTimeoutTimer = null;
     this.nextRunId = 1;
     this.readyPromise = null;
+  }
+
+  _clearBootTimers() {
+    if (this._slowBootTimer) {
+      clearTimeout(this._slowBootTimer);
+      this._slowBootTimer = null;
+    }
+    if (this._bootTimeoutTimer) {
+      clearTimeout(this._bootTimeoutTimer);
+      this._bootTimeoutTimer = null;
+    }
   }
 
   init() {
@@ -33,12 +46,14 @@ export class PythonRunner {
   }
 
   _bootWorker(resolveReady, rejectReady) {
+    this._clearBootTimers();
     if (this.worker) {
       try {
         this.worker.terminate();
       } catch {
         // Ignore
       }
+      this.worker = null;
     }
 
     this.ready = false;
@@ -51,27 +66,44 @@ export class PythonRunner {
     const worker = new Worker(new URL("./pyodide-worker.js", import.meta.url));
     this.worker = worker;
 
-    const slowBootTimer = setTimeout(() => {
+    let bootSettled = false;
+    const settleBootResolve = () => {
+      if (bootSettled) return;
+      bootSettled = true;
+      this._clearBootTimers();
+      if (resolveReady) resolveReady();
+    };
+    const settleBootReject = (err) => {
+      if (bootSettled) return;
+      bootSettled = true;
+      this._clearBootTimers();
+      if (rejectReady) rejectReady(err);
+    };
+
+    this._slowBootTimer = setTimeout(() => {
       if (this.worker === worker && !this.ready) {
         this.onStatusChange("booting", "Downloading Python...");
       }
     }, 5000);
 
-    const bootTimeoutTimer = setTimeout(() => {
+    this._bootTimeoutTimer = setTimeout(() => {
       if (this.worker === worker && !this.ready) {
+        try {
+          worker.terminate();
+        } catch {
+          // Ignore
+        }
+        this.worker = null;
         this.ready = false;
         this.readyPromise = null;
         this.onStatusChange("error", "Python Timeout");
-        if (rejectReady) {
-          rejectReady(new Error("Python took too long to download from jsDelivr. Please check your connection and refresh."));
-        }
+        settleBootReject(
+          new Error(
+            "Python took too long to download from jsDelivr. Please check your connection and refresh."
+          )
+        );
       }
     }, 30000);
-
-    const clearBootTimers = () => {
-      clearTimeout(slowBootTimer);
-      clearTimeout(bootTimeoutTimer);
-    };
 
     const initMsg = { type: "init" };
     if (this.supportsSAB) {
@@ -93,22 +125,26 @@ export class PythonRunner {
       if (!msg) return;
 
       if (msg.type === "ready") {
-        clearBootTimers();
         this.ready = true;
         this.onStatusChange(
           "ready",
           this.supportsSAB ? "Python Ready" : "Python Ready (Lite)"
         );
-        if (resolveReady) resolveReady();
+        settleBootResolve();
         return;
       }
 
       if (msg.type === "init_error") {
-        clearBootTimers();
+        try {
+          worker.terminate();
+        } catch {
+          // Ignore
+        }
+        this.worker = null;
         this.ready = false;
         this.readyPromise = null;
         this.onStatusChange("error", "Python Offline");
-        if (rejectReady) rejectReady(new Error(msg.error || "Worker init failed"));
+        settleBootReject(new Error(msg.error || "Worker init failed"));
         return;
       }
 
@@ -147,16 +183,26 @@ export class PythonRunner {
 
     worker.onerror = (err) => {
       if (this.worker !== worker) return;
-      clearBootTimers();
+      const errObj = new Error(err && err.message ? err.message : "Worker crashed");
+      try {
+        worker.terminate();
+      } catch {
+        // Ignore
+      }
+      this.worker = null;
       this.ready = false;
       this.readyPromise = null;
       this.onStatusChange("error", "Python Error");
+
+      // If still booting, rejecting bootPromise will also reject any run waiting on it
+      if (!bootSettled) {
+        settleBootReject(errObj);
+        return;
+      }
       const active = this.activeRun;
       if (active) {
         this._clearActiveRun();
-        active.reject(new Error(err.message || "Worker crashed"));
-      } else if (rejectReady) {
-        rejectReady(new Error(err.message || "Worker crashed"));
+        active.reject(errObj);
       }
     };
 
@@ -207,16 +253,15 @@ export class PythonRunner {
   async _handleRunResult(result, run) {
     if (this.activeRun !== run || run.aborted) return;
 
-    // Fallback input() loop when SharedArrayBuffer is unavailable (plain http.server)
+    // Fallback input() loop when SharedArrayBuffer is unavailable (plain http.server / GitHub Pages)
     if (!result.ok && result.error === "NEEDS_FALLBACK_INPUT") {
       this._pauseWatchdog(run);
       const out = result.stdout || "";
-      if (out.length > run.lastFallbackStdoutLen) {
+      if (out) {
         run.onStream?.({
-          stdoutDelta: out.slice(run.lastFallbackStdoutLen),
+          stdoutReplace: out,
           commandsDelta: [],
         });
-        run.lastFallbackStdoutLen = out.length;
       }
 
       const answer = await run.onInputRequest(result.needsFallbackPrompt || "");
@@ -240,6 +285,7 @@ export class PythonRunner {
         runId: run.runId,
         code: run.code,
         preInputs: run.preInputs,
+        runSeed: run.runSeed,
       });
       return;
     }
@@ -286,13 +332,16 @@ export class PythonRunner {
     }
 
     const runId = this.nextRunId++;
+    // Deterministic per-run seed so non-SAB fallback replays keep random.randint() consistent across input() prompts
+    const runSeed = Math.floor(Math.random() * 2147483646) + 1;
+
     return new Promise((resolve, reject) => {
       const run = {
         runId,
+        runSeed,
         code,
         aborted: false,
         preInputs: [],
-        lastFallbackStdoutLen: 0,
         onStream: onStream || (() => {}),
         onInputRequest: onInputRequest || (async () => ""),
         timeoutMs,
@@ -314,6 +363,7 @@ export class PythonRunner {
             runId,
             code,
             preInputs: [],
+            runSeed,
           });
         },
         (err) => {

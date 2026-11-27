@@ -136,7 +136,8 @@ export function recordLessonCompletion(
 
 export function isLessonUnlocked(state, lessonId, orderedLessonIds) {
   const idx = orderedLessonIds.indexOf(lessonId);
-  if (idx <= 0) return true;
+  if (idx === -1) return false;
+  if (idx === 0) return true;
   if (state.completedLessons?.[lessonId]?.passed) return true;
   const prevId = orderedLessonIds[idx - 1];
   if (state.completedLessons?.[prevId]?.passed) return true;

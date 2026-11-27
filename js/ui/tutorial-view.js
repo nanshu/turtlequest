@@ -226,6 +226,8 @@ function mountTurtleTapWidget(mountEl) {
         state.x = 0;
         state.y = 0;
         state.heading = 0;
+        colorIdx = 0;
+        state.color = palette[0].hex;
         state.segments = [];
         state.lines = ["import turtle", "t = turtle.Turtle()"];
       }
@@ -250,7 +252,33 @@ function mountPolygonSliderWidget(mountEl) {
     12: "Dodecagon",
   };
 
-  function renderWidget() {
+  mountEl.innerHTML = `
+    <div class="widget-box">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
+        <label style="font-weight:900;">
+          Sides: <span id="poly-sides-val" style="color:var(--blue-dark); font-size:1.1rem;"></span>
+          <span id="poly-sides-name" style="color:var(--text-muted); font-weight:700;"></span>
+        </label>
+        <input id="poly-slider" type="range" min="3" max="12" value="${sides}" style="flex:1; min-width:150px;" />
+        <span id="poly-angle-badge" class="xp-badge"></span>
+      </div>
+      <div class="widget-split">
+        <svg viewBox="0 0 190 170" class="mini-turtle-canvas">
+          <polygon id="poly-shape" points="" fill="rgba(28, 176, 246, 0.16)" stroke="#1cb0f6" stroke-width="3.5" stroke-linejoin="round" />
+        </svg>
+        <pre class="mini-code-block live-code-preview"><code id="poly-code"></code></pre>
+      </div>
+    </div>
+  `;
+
+  const sidesValEl = mountEl.querySelector("#poly-sides-val");
+  const sidesNameEl = mountEl.querySelector("#poly-sides-name");
+  const angleBadgeEl = mountEl.querySelector("#poly-angle-badge");
+  const polyShapeEl = mountEl.querySelector("#poly-shape");
+  const polyCodeEl = mountEl.querySelector("#poly-code");
+  const sliderEl = mountEl.querySelector("#poly-slider");
+
+  function update() {
     const angle = Number((360 / sides).toFixed(1));
     const r = 64;
     const pts = [];
@@ -258,36 +286,20 @@ function mountPolygonSliderWidget(mountEl) {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / sides;
       pts.push(`${(95 + r * Math.cos(a)).toFixed(1)},${(85 + r * Math.sin(a)).toFixed(1)}`);
     }
-
-    mountEl.innerHTML = `
-      <div class="widget-box">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px;">
-          <label style="font-weight:900;">
-            Sides: <span style="color:var(--blue-dark); font-size:1.1rem;">${sides}</span>
-            <span style="color:var(--text-muted); font-weight:700;">(${names[sides] || `${sides}-gon`})</span>
-          </label>
-          <input id="poly-slider" type="range" min="3" max="12" value="${sides}" style="flex:1; min-width:150px;" />
-          <span class="xp-badge">360 ÷ ${sides} = ${angle}°</span>
-        </div>
-        <div class="widget-split">
-          <svg viewBox="0 0 190 170" class="mini-turtle-canvas" style="height:170px;">
-            <polygon points="${pts.join(" ")}" fill="rgba(28, 176, 246, 0.16)" stroke="#1cb0f6" stroke-width="3.5" stroke-linejoin="round" />
-          </svg>
-          <pre class="mini-code-block live-code-preview"><code>for i in range(${sides}):
-    t.forward(70)
-    t.right(360 / ${sides})  # ${angle}°</code></pre>
-        </div>
-      </div>
-    `;
-
-    mountEl.querySelector("#poly-slider").addEventListener("input", (e) => {
-      sides = Number(e.target.value);
-      soundFX.playStep();
-      renderWidget();
-    });
+    sidesValEl.textContent = String(sides);
+    sidesNameEl.textContent = `(${names[sides] || `${sides}-gon`})`;
+    angleBadgeEl.textContent = `360 ÷ ${sides} = ${angle}°`;
+    polyShapeEl.setAttribute("points", pts.join(" "));
+    polyCodeEl.textContent = `for i in range(${sides}):\n    t.forward(70)\n    t.right(360 / ${sides})  # ${angle}°`;
   }
 
-  renderWidget();
+  sliderEl.addEventListener("input", (e) => {
+    sides = Number(e.target.value);
+    soundFX.playStep();
+    update();
+  });
+
+  update();
 }
 
 function mountCoordPickerWidget(mountEl) {
@@ -352,9 +364,21 @@ t.dot(14, "gold")</code></pre>
 
     const svg = mountEl.querySelector("#coord-svg");
     svg.addEventListener("click", (e) => {
-      const rect = svg.getBoundingClientRect();
-      const sx = ((e.clientX - rect.left) / rect.width) * 260;
-      const sy = ((e.clientY - rect.top) / rect.height) * 190;
+      let sx;
+      let sy;
+      const ctm = typeof svg.getScreenCTM === "function" ? svg.getScreenCTM() : null;
+      if (ctm && typeof svg.createSVGPoint === "function") {
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX;
+        pt.y = e.clientY;
+        const svgPt = pt.matrixTransform(ctm.inverse());
+        sx = svgPt.x;
+        sy = svgPt.y;
+      } else {
+        const rect = svg.getBoundingClientRect();
+        sx = ((e.clientX - rect.left) / rect.width) * 260;
+        sy = ((e.clientY - rect.top) / rect.height) * 190;
+      }
       px = Math.round((((sx - 130) / 110) * 200) / 10) * 10;
       py = Math.round((((95 - sy) / 75) * 150) / 10) * 10;
       px = Math.max(-200, Math.min(200, px));
@@ -457,7 +481,7 @@ function mountModuloRandomWidget(mountEl) {
           </div>
           <button id="roll-rand-btn" class="btn btn-purple btn-sm" type="button">🎲 Roll Random Star!</button>
         </div>
-        <div style="display:grid; grid-template-columns:repeat(8, 1fr); gap:6px; margin-bottom:10px;">
+        <div class="modulo-grid">
           ${tiles}
         </div>
         <pre class="mini-code-block"><code># Rolled with random.randint() &amp; random.choice():
@@ -506,54 +530,54 @@ function mountTreeExplorerWidget(mountEl) {
     buildTreeLines(nx, ny, len * 0.72, deg - angle, level - 1, out);
   }
 
-  function renderWidget() {
+  mountEl.innerHTML = `
+    <div class="widget-box">
+      <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+        <label style="font-weight:800; font-size:0.86rem;">
+          Levels: <strong id="tree-depth-val"></strong>
+          <input id="tree-depth" type="range" min="1" max="6" value="${depth}" style="vertical-align:middle;" />
+        </label>
+        <label style="font-weight:800; font-size:0.86rem;">
+          Spread Angle: <strong id="tree-angle-val"></strong>
+          <input id="tree-angle" type="range" min="15" max="48" value="${angle}" style="vertical-align:middle;" />
+        </label>
+        <span id="tree-count-badge" class="xp-badge"></span>
+      </div>
+      <div class="widget-split">
+        <svg id="tree-svg" viewBox="0 0 220 180" class="mini-turtle-canvas"></svg>
+        <pre class="mini-code-block live-code-preview"><code id="tree-code"></code></pre>
+      </div>
+    </div>
+  `;
+
+  const depthValEl = mountEl.querySelector("#tree-depth-val");
+  const angleValEl = mountEl.querySelector("#tree-angle-val");
+  const countBadgeEl = mountEl.querySelector("#tree-count-badge");
+  const treeSvgEl = mountEl.querySelector("#tree-svg");
+  const treeCodeEl = mountEl.querySelector("#tree-code");
+
+  function update() {
     const lines = [];
     buildTreeLines(110, 168, 44, 90, depth, lines);
-
-    mountEl.innerHTML = `
-      <div class="widget-box">
-        <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
-          <label style="font-weight:800; font-size:0.86rem;">
-            Levels: <strong>${depth}</strong>
-            <input id="tree-depth" type="range" min="1" max="6" value="${depth}" style="vertical-align:middle;" />
-          </label>
-          <label style="font-weight:800; font-size:0.86rem;">
-            Spread Angle: <strong>${angle}°</strong>
-            <input id="tree-angle" type="range" min="15" max="48" value="${angle}" style="vertical-align:middle;" />
-          </label>
-          <span class="xp-badge">${lines.length} branches!</span>
-        </div>
-        <div class="widget-split">
-          <svg viewBox="0 0 220 180" class="mini-turtle-canvas" style="height:180px;">
-            ${lines.join("")}
-          </svg>
-          <pre class="mini-code-block live-code-preview"><code>def draw_branch(length):
-    if length &lt; 15:
-        return
-    t.forward(length)
-    t.left(${angle})
-    draw_branch(length * 0.7)
-    t.right(${angle * 2})
-    draw_branch(length * 0.7)
-    t.left(${angle})
-    t.backward(length)</code></pre>
-        </div>
-      </div>
-    `;
-
-    mountEl.querySelector("#tree-depth").addEventListener("input", (e) => {
-      depth = Number(e.target.value);
-      soundFX.playStep();
-      renderWidget();
-    });
-    mountEl.querySelector("#tree-angle").addEventListener("input", (e) => {
-      angle = Number(e.target.value);
-      soundFX.playStep();
-      renderWidget();
-    });
+    depthValEl.textContent = String(depth);
+    angleValEl.textContent = `${angle}°`;
+    countBadgeEl.textContent = `${lines.length} branches!`;
+    treeSvgEl.innerHTML = lines.join("");
+    treeCodeEl.textContent = `def draw_branch(length):\n    if length < 15:\n        return\n    t.forward(length)\n    t.left(${angle})\n    draw_branch(length * 0.7)\n    t.right(${angle * 2})\n    draw_branch(length * 0.7)\n    t.left(${angle})\n    t.penup(); t.backward(length); t.pendown()`;
   }
 
-  renderWidget();
+  mountEl.querySelector("#tree-depth").addEventListener("input", (e) => {
+    depth = Number(e.target.value);
+    soundFX.playStep();
+    update();
+  });
+  mountEl.querySelector("#tree-angle").addEventListener("input", (e) => {
+    angle = Number(e.target.value);
+    soundFX.playStep();
+    update();
+  });
+
+  update();
 }
 
 export function renderTutorialView(container, node, { onBack, onComplete }) {
@@ -578,10 +602,10 @@ export function renderTutorialView(container, node, { onBack, onComplete }) {
         </div>
 
         <div class="xp-badge" style="display:inline-block; margin-bottom:10px;">
-          ${escapeHtml(step.badge || node.title)}
+          ${formatInlineText(step.badge || node.title)}
         </div>
 
-        <h2 style="margin:0 0 10px; font-size:1.4rem; font-weight:900;">${escapeHtml(step.title)}</h2>
+        <h2 style="margin:0 0 10px; font-size:1.4rem; font-weight:900;">${formatInlineText(step.title)}</h2>
         <p class="tutorial-body">${formatInlineText(step.body)}</p>
 
         ${step.diagram ? renderVisualDiagram(step.diagram) : ""}

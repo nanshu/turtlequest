@@ -72,9 +72,11 @@ draw_square(60)
       const paramFns = (astInfo?.defNames || []).filter(
         (fn) => (astInfo?.defParamCounts?.[fn] || 0) >= 1
       );
-      const calledTwice = paramFns.some((fn) => (astInfo?.defCallCounts?.[fn] || 0) >= 2);
+      const calledTwice = paramFns.some(
+        (fn) => (astInfo?.defCallCounts?.[fn] || 0) >= 2 || Boolean(astInfo?.hasDefCalledInLoop?.[fn])
+      );
 
-      const paths = h.getConnectedPaths(segments);
+      const paths = h.splitClosedShapes(segments);
       const squares = paths.filter((p) => h.isRegularPolygon(p, 4, { minSide: 20 }));
       const sideLengths = squares.map((sq) => {
         const lens = h.pathEdgeLengths(sq);
@@ -163,7 +165,7 @@ draw_star(150)
         Boolean(astInfo?.hasFor) &&
         Object.values(astInfo?.defCallCounts || {}).some((c) => c >= 1);
 
-      const paths = h.getConnectedPaths(segments);
+      const paths = h.splitClosedShapes(segments);
       const stars = paths.filter((p) => h.isStarPolygon(p, 5, 2, { minSide: 40 }));
       const bonusOk = h.countFills(commands) >= 1 || stars.length >= 2;
 
@@ -230,7 +232,8 @@ draw_polygon(3, 80)
     showGridDefault: false,
     goals: [
       "Define a function taking 2+ parameters (`sides, size`)",
-      "Call it to draw 2+ regular polygons with DIFFERENT side counts",
+      "Call it 2+ times (directly or inside a loop)",
+      "Draw 2+ regular polygons with DIFFERENT side counts",
     ],
     bonusGoal: "Bonus Star: Draw 3+ different polygon types (for example: 3, 4, and 6 sides)!",
     hints: [
@@ -244,9 +247,11 @@ draw_polygon(3, 80)
       const twoParamFns = (astInfo?.defNames || []).filter(
         (fn) => (astInfo?.defParamCounts?.[fn] || 0) >= 2
       );
-      const calledTwice = twoParamFns.some((fn) => (astInfo?.defCallCounts?.[fn] || 0) >= 2);
+      const calledTwice = twoParamFns.some(
+        (fn) => (astInfo?.defCallCounts?.[fn] || 0) >= 2 || Boolean(astInfo?.hasDefCalledInLoop?.[fn])
+      );
 
-      const paths = h.getConnectedPaths(segments);
+      const paths = h.splitClosedShapes(segments);
       const polyKinds = new Set();
       for (const p of paths) {
         for (let n = 3; n <= 12; n++) {
@@ -373,8 +378,11 @@ for row in range(2):
       const { astInfo, turtleData } = runResult;
       const { segments } = turtleData;
       const usedDef = Boolean(astInfo?.hasDef) && Object.values(astInfo?.defCallCounts || {}).some((c) => c >= 1);
-      const nested = (astInfo?.maxLoopNesting || 0) >= 2;
-      const paths = h.getConnectedPaths(segments);
+      const indirectNested = (astInfo?.defNames || []).some(
+        (fn) => Boolean(astInfo?.defHasLoop?.[fn]) && Boolean(astInfo?.hasDefCalledInLoop?.[fn])
+      );
+      const nested = (astInfo?.maxLoopNesting || 0) >= 2 || indirectNested;
+      const paths = h.splitClosedShapes(segments);
       const closedTiles = paths.filter((p) => h.isClosedPath(p));
       const bonusOk = closedTiles.length >= 9 && h.countDistinctColors(segments) >= 2;
 

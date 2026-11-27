@@ -416,9 +416,9 @@ export function showCheatSheetModal({ onInsertSnippet = null } = {}) {
           ${section.colors
             .map(
               (c) => `
-            <button class="color-swatch-chip" data-color="${escapeHtml(c.name)}" type="button" title='Click to copy t.pencolor("${escapeHtml(
-              c.name
-            )}")'>
+            <button class="color-swatch-chip" data-color="${escapeHtml(c.name)}" type="button" title='${
+                onInsertSnippet ? "Click to insert" : "Click to copy"
+              } t.pencolor("${escapeHtml(c.name)}")'>
               <span class="swatch-dot" style="background:${c.hex};"></span>
               <span>"${escapeHtml(c.name)}"</span>
             </button>
@@ -494,12 +494,19 @@ export function showCheatSheetModal({ onInsertSnippet = null } = {}) {
     });
 
     wrap.querySelectorAll(".cheat-copy-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const item = section.items[Number(btn.dataset.idx)];
-        if (item && navigator.clipboard) {
-          navigator.clipboard.writeText(item.code).catch(() => {});
+        if (!item) return;
+        let ok = false;
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          try {
+            await navigator.clipboard.writeText(item.code);
+            ok = true;
+          } catch {
+            ok = false;
+          }
         }
-        btn.textContent = "Copied ✓";
+        btn.textContent = ok ? "Copied ✓" : "Copy blocked";
         setTimeout(() => {
           if (btn.isConnected) btn.textContent = "📋 Copy";
         }, 1200);

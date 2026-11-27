@@ -266,9 +266,12 @@ export function renderSandboxView(
 
     try {
       const res = await runner.run(code, {
-        onStream({ stdoutDelta, commandsDelta }) {
+        onStream({ stdoutDelta, stdoutReplace, commandsDelta }) {
           if (disposed) return;
-          if (stdoutDelta) {
+          if (typeof stdoutReplace === "string") {
+            liveStdout = stdoutReplace;
+            consoleEl.textContent = liveStdout;
+          } else if (stdoutDelta) {
             liveStdout += stdoutDelta;
             consoleEl.textContent = liveStdout;
           }

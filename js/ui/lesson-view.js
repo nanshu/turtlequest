@@ -58,10 +58,10 @@ export function renderLessonView(
             hasTutorial
               ? `
               <div class="mission-tabs" role="tablist">
-                <button id="ws-tab-learn" class="mission-tab-btn ${activeCardTab === "learn" ? "active" : ""}" type="button">
+                <button id="ws-tab-learn" class="mission-tab-btn ${activeCardTab === "learn" ? "active" : ""}" role="tab" aria-selected="${activeCardTab === "learn"}" type="button">
                   📖 Learn First (${tutorialSteps.length})
                 </button>
-                <button id="ws-tab-mission" class="mission-tab-btn ${activeCardTab === "mission" ? "active" : ""}" type="button">
+                <button id="ws-tab-mission" class="mission-tab-btn ${activeCardTab === "mission" ? "active" : ""}" role="tab" aria-selected="${activeCardTab === "mission"}" type="button">
                   🎯 Mission &amp; Goals
                 </button>
               </div>
@@ -307,10 +307,16 @@ export function renderLessonView(
     player.reset();
 
     try {
+      if (hasTutorial && activeCardTab === "learn") {
+        setCardTab("mission");
+      }
       const res = await runner.run(code, {
-        onStream({ stdoutDelta, commandsDelta }) {
+        onStream({ stdoutDelta, stdoutReplace, commandsDelta }) {
           if (disposed) return;
-          if (stdoutDelta) {
+          if (typeof stdoutReplace === "string") {
+            liveStdout = stdoutReplace;
+            consoleEl.textContent = liveStdout || "(no print output)";
+          } else if (stdoutDelta) {
             liveStdout += stdoutDelta;
             consoleEl.textContent = liveStdout || "(no print output)";
           }
@@ -416,6 +422,8 @@ export function renderLessonView(
     if (learnTabBtn && missionTabBtn && learnPanelEl && missionPanelEl) {
       learnTabBtn.classList.toggle("active", tabName === "learn");
       missionTabBtn.classList.toggle("active", tabName === "mission");
+      learnTabBtn.setAttribute("aria-selected", String(tabName === "learn"));
+      missionTabBtn.setAttribute("aria-selected", String(tabName === "mission"));
       learnPanelEl.style.display = tabName === "learn" ? "block" : "none";
       missionPanelEl.style.display = tabName === "mission" ? "block" : "none";
     }
@@ -427,7 +435,7 @@ export function renderLessonView(
     const isLast = tutorialStepIdx >= tutorialSteps.length - 1;
     learnPanelEl.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
-        <strong style="font-size:1.02rem; color:var(--blue-dark);">${escapeHtml(step.title)}</strong>
+        <strong style="font-size:1.02rem; color:var(--blue-dark);">${formatInlineText(step.title)}</strong>
         <span style="font-size:0.76rem; font-weight:800; color:var(--text-muted);">
           Card ${tutorialStepIdx + 1} / ${tutorialSteps.length}
         </span>

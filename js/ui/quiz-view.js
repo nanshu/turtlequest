@@ -36,7 +36,7 @@ export function renderQuizView(container, node, { onBack, onComplete }) {
         }
         return `
           <button class="${cls}" data-opt="${idx}" type="button" ${answered ? "disabled" : ""}>
-            ${escapeHtml(opt)}
+            ${formatInlineText(opt)}
           </button>
         `;
       })

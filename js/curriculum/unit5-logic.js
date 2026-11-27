@@ -30,22 +30,19 @@ for i in range(8):
     t.goto(-140 + i * 40, 100)
     t.pendown()
     t.setheading(270)
-    # Use if i % 2 == 0: to switch between two colors!
-    if i % 2 == 0:
-        t.pencolor("teal")
-    else:
-        t.pencolor("gold")
+    # Replace this line with an if i % 2 == 0: / else: color switch!
+    t.pencolor("teal")
     t.forward(200)
 `,
     blueprint: null,
     showGridDefault: false,
     goals: [
       "Use a `for` loop with `if` and `%` (modulo)",
-      "Alternate between 2+ colors across 6+ lines",
+      "Alternate between 2+ colors across 6+ drawn lines",
     ],
     bonusGoal: "Bonus Star: Use `if / elif / else` with `i % 3` to cycle 3+ colors across 9+ lines!",
     hints: [
-      "Run the starter code to see `i % 2 == 0` in action, then customize the colors or try a striped spiral!",
+      "Replace `t.pencolor(\"teal\")` with:\n`if i % 2 == 0:`\n`    t.pencolor(\"teal\")`\n`else:`\n`    t.pencolor(\"gold\")`",
       "For 3 alternating colors, try `range(9)` with `if i % 3 == 0:`, `elif i % 3 == 1:`, and `else:`!",
       "Remember to indent 4 spaces inside `for`, and 8 spaces inside `if` / `elif` / `else`!",
     ],
@@ -116,8 +113,9 @@ for i in range(sides):
     blueprint: null,
     showGridDefault: false,
     goals: [
-      "Ask the user with `input()` and convert with `int()`",
-      "Use a `for` loop to draw the chosen regular polygon (3+ sides)",
+      "Use `input()` and `int()`",
+      "Use a `for` loop",
+      "Draw a closed regular polygon from user input (3+ sides)",
     ],
     bonusGoal: "Bonus Star: Include an `if` safety check AND fill the shape with `begin_fill()`/`end_fill()`!",
     hints: [
@@ -298,7 +296,7 @@ for i in range(18):
     xp: 45,
     bonusXp: 20,
     story:
-      "In math, a **Random Walk** picks a random direction at every step! Walk at least **25 random steps**, add an `if` fence so your turtle bounces back if it strays too far (`t.distance(0, 0) > 150`), and `print()` how far from home it ended!",
+      "In math, a **Random Walk** picks a random direction at every step! Walk at least **20 random steps**, add an `if` fence so your turtle bounces back if it strays too far (`t.distance(0, 0) > 150`), and `print()` how far from home it ended!",
     mathTip:
       "Even after 40 steps of length `25` (`1000` total pixels walked!), random paths often end surprisingly close to `(0, 0)`—check `t.distance(0, 0)` in the console!",
     starterCode: `import turtle
@@ -314,10 +312,8 @@ for i in range(30):
     t.setheading(turn)
     t.forward(25)
 
-    # Fence check: if too far from center, aim back toward (0, 0)!
-    if t.distance(0, 0) > 150:
-        t.setheading(t.towards(0, 0))
-        t.forward(40)
+    # Add an if fence here: if t.distance(0, 0) > 150: turn toward (0, 0) and step back!
+    
 
 print("Final distance from home:", round(t.distance(0, 0), 1))
 `,
@@ -330,9 +326,9 @@ print("Final distance from home:", round(t.distance(0, 0), 1))
     ],
     bonusGoal: "Bonus Star: Walk 40+ steps using 3+ different colors!",
     hints: [
-      "Hit **▶ Run Code** to watch the Random Walk in action! Then try boosting `range(30)` to `range(45)` for the Bonus Star.",
-      "Try switching `turn = random.choice([0, 90, 180, 270])` to `random.randint(0, 359)` for a wild compass walk!",
-      "Make sure you keep `print(...)` at the bottom so you can compare how far each random walk finishes from home!",
+      "Inside the loop, add:\n`if t.distance(0, 0) > 150:`\n`    t.setheading(t.towards(0, 0))`\n`    t.forward(40)`",
+      "Boost `range(30)` to `range(45)` to earn the Bonus Star!",
+      "Try switching `random.choice([0, 90, 180, 270])` to `random.randint(0, 359)` for a wild compass walk!",
     ],
     check(runResult, h) {
       const { astInfo, stdout, turtleData } = runResult;
