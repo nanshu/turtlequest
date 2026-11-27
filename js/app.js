@@ -239,12 +239,6 @@ backupBtn.addEventListener("click", () => {
     },
   });
 });
-        navigateToPath();
-      }
-      return res;
-    },
-  });
-});
 
 // Boot UI immediately and warm up Pyodide in background
 navigateToPath();
