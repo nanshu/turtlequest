@@ -145,6 +145,7 @@ def _tq_analyze_ast(tree):
         "defParamCounts": {},
         "defCallCounts": {},
         "defHasLoop": {},
+        "defHasReturnValue": {},
         "hasDefCalledInLoop": {},
         "classNames": [],
         "classMethodNames": {},
@@ -162,8 +163,10 @@ def _tq_analyze_ast(tree):
     call_set = set()
     def_names = []
     top_level_defs = []
+    top_level_def_set = set()
     def_param_counts = {}
     def_has_loop = {}
+    def_has_return_value = {}
     called_in_loop = set()
     all_name_calls = {}
     class_names = []
@@ -180,7 +183,7 @@ def _tq_analyze_ast(tree):
 
         if isinstance(node, (ast.For, ast.AsyncFor)):
             info["hasFor"] = True
-            if current_fn is not None:
+            if current_fn is not None and (current_cls is None or current_fn not in top_level_def_set):
                 def_has_loop[current_fn] = True
             if (
                 isinstance(node.iter, ast.Call)
@@ -191,10 +194,39 @@ def _tq_analyze_ast(tree):
                 and isinstance(node.iter.args[0].value, int)
             ):
                 info["forRanges"].append(node.iter.args[0].value)
+            # Walk iter OUTSIDE the loop depth so [Cls(...)] in iter isn't counted as called in loop
+            walk_loop(node.iter, depth, next_fn, next_cls)
+            walk_loop(node.target, next_depth, next_fn, next_cls)
+            for stmt in node.body:
+                walk_loop(stmt, next_depth, next_fn, next_cls)
+            for stmt in node.orelse:
+                walk_loop(stmt, next_depth, next_fn, next_cls)
+            return
         elif isinstance(node, ast.While):
             info["hasWhile"] = True
-            if current_fn is not None:
+            if current_fn is not None and (current_cls is None or current_fn not in top_level_def_set):
                 def_has_loop[current_fn] = True
+        elif isinstance(node, (ast.ListComp, ast.SetComp, ast.DictComp)):
+            if isinstance(node, ast.ListComp):
+                info["hasList"] = True
+            elif isinstance(node, ast.SetComp):
+                info["hasSet"] = True
+            elif isinstance(node, ast.DictComp):
+                info["hasDict"] = True
+            comp_depth = depth + 1
+            if comp_depth > info["maxLoopNesting"]:
+                info["maxLoopNesting"] = comp_depth
+            for idx_g, gen in enumerate(node.generators):
+                walk_loop(gen.iter, depth if idx_g == 0 else comp_depth, next_fn, next_cls)
+                walk_loop(gen.target, comp_depth, next_fn, next_cls)
+                for cond in gen.ifs:
+                    walk_loop(cond, comp_depth, next_fn, next_cls)
+            if isinstance(node, ast.DictComp):
+                walk_loop(node.key, comp_depth, next_fn, next_cls)
+                walk_loop(node.value, comp_depth, next_fn, next_cls)
+            else:
+                walk_loop(node.elt, comp_depth, next_fn, next_cls)
+            return
         elif isinstance(node, ast.ClassDef):
             info["hasClassDef"] = True
             class_names.append(node.name)
@@ -205,10 +237,16 @@ def _tq_analyze_ast(tree):
             def_names.append(node.name)
             if current_cls is None:
                 top_level_defs.append(node.name)
+                top_level_def_set.add(node.name)
+                def_param_counts[node.name] = len(node.args.args)
+                def_has_loop.setdefault(node.name, False)
+                def_has_return_value.setdefault(node.name, False)
             else:
                 class_methods.setdefault(current_cls, []).append(node.name)
-            def_param_counts[node.name] = len(node.args.args)
-            def_has_loop.setdefault(node.name, False)
+                if node.name not in top_level_def_set:
+                    def_param_counts.setdefault(node.name, len(node.args.args))
+                    def_has_loop.setdefault(node.name, False)
+                    def_has_return_value.setdefault(node.name, False)
             next_fn = node.name
         elif isinstance(node, ast.If):
             info["hasIf"] = True
@@ -216,6 +254,8 @@ def _tq_analyze_ast(tree):
                 info["hasElifOrElse"] = True
         elif isinstance(node, ast.Return) and node.value is not None:
             info["hasReturnValue"] = True
+            if current_fn is not None and (current_cls is None or current_fn not in top_level_def_set):
+                def_has_return_value[current_fn] = True
         elif isinstance(node, ast.Break):
             info["hasBreak"] = True
         elif isinstance(node, ast.Mod):
@@ -313,6 +353,7 @@ def _tq_analyze_ast(tree):
     info["defParamCounts"] = def_param_counts
     info["defCallCounts"] = {fn: all_name_calls.get(fn, 0) for fn in info["defNames"]}
     info["defHasLoop"] = {fn: bool(def_has_loop.get(fn, False)) for fn in info["defNames"]}
+    info["defHasReturnValue"] = {fn: bool(def_has_return_value.get(fn, False)) for fn in info["defNames"]}
     info["hasDefCalledInLoop"] = {fn: (fn in called_in_loop) for fn in info["defNames"]}
     info["classNames"] = sorted(set(class_names))
     info["classMethodNames"] = {cls: sorted(set(ms)) for cls, ms in class_methods.items()}
@@ -377,6 +418,7 @@ def _tq_run(code, run_seed=None):
         "defParamCounts": {},
         "defCallCounts": {},
         "defHasLoop": {},
+        "defHasReturnValue": {},
         "hasDefCalledInLoop": {},
         "classNames": [],
         "classMethodNames": {},

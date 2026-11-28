@@ -130,20 +130,22 @@ t.pencolor("indigo")
 t.penup()
 t.goto(-140, 100)
 t.pendown()
-for w, h in [(280, 90), (200, 90), (280, 90), (200, 90)]:
-    t.forward(w)
-    t.right(h)
+for i in range(2):
+    t.forward(280)
+    t.right(90)
+    t.forward(200)
+    t.right(90)
 
 t.penup()
 t.home()
 t.pendown()
 t.pencolor("dodgerblue")
 
-for step in range(28):
+for step in range(36):
     t.setheading(random.randint(0, 359))
     t.forward(40)
-    x = t.xcor()
-    y = t.ycor()
+    x = t.xcor()   # Turtle's current X position
+    y = t.ycor()   # Turtle's current Y position
 
     # 2. Add an if guard with or / and / not!
     # Example: if x < -130 or x > 130 or y < -90 or y > 90:
@@ -169,14 +171,21 @@ for step in range(28):
       const usedLogicGate =
         Boolean(astInfo?.hasIf) && (Boolean(astInfo?.hasBoolOp) || Boolean(astInfo?.hasNot));
       const patrolled =
-        Boolean(astInfo?.hasImportRandom) && Boolean(astInfo?.hasFor) && segments.length >= 24;
+        Boolean(astInfo?.hasImportRandom) && Boolean(astInfo?.hasFor) && segments.length >= 20;
+      const box = h.boundingBox(segments);
+      const stayedBounded =
+        box.minX >= -215 && box.maxX <= 215 && box.minY >= -175 && box.maxY <= 175;
       const insideFinish =
-        Math.abs(finalState?.x || 0) <= 155 && Math.abs(finalState?.y || 0) <= 115;
+        stayedBounded &&
+        Math.abs(finalState?.x || 0) <= 155 &&
+        Math.abs(finalState?.y || 0) <= 115;
 
       const dotColors = new Set(
         commands.filter((c) => c.cmd === "dot" && c.color).map((c) => String(c.color).toLowerCase())
       );
-      const bonusOk = dotColors.size >= 2 && h.countDots(commands) >= 4;
+      const bonusOk =
+        (dotColors.size >= 2 && h.countDots(commands) >= 4) ||
+        (Boolean(astInfo?.hasElifOrElse) && h.countDots(commands) >= 20);
 
       const goals = [
         { label: "Use `and`, `or`, or `not` in an `if` check", passed: usedLogicGate },
@@ -231,10 +240,10 @@ raw = input("Enter your hero name: ")
       "Write a personalized banner using an f-string (`f\"...\"`) + `t.write(...)`",
       "Draw a closed box around your banner",
     ],
-    bonusGoal: "Bonus Star: Check `clean[0]` with an `if` statement to pick a custom color AND fill your banner!",
+    bonusGoal: "Bonus Star: Use an `if` check (like `clean[0]`) to pick a custom color AND fill your banner (2+ colors)!",
     hints: [
-      "Start with:\n`clean = raw.strip().lower()`\n`if len(clean) == 0:`\n`    clean = \"hero\"`\n`width = max(160, len(clean) * 22 + 90)`",
-      "Draw a centered rectangle (`width` wide, `80` tall) starting at `(-width / 2, 40)` with `t.begin_fill()` and `t.end_fill()`!",
+      "Start with:\n`clean = raw.strip().lower()`\n`if len(clean) == 0:`\n`    clean = \"hero\"`\n`width = max(160, len(clean) * 22 + 90)`  (`max` picks whichever number is bigger!)",
+      "Draw a centered rectangle (`width` wide, `80` tall) starting at `(-width / 2, 40)`. Pick a color like `t.fillcolor(\"gold\")` and wrap the rectangle in `t.begin_fill()` and `t.end_fill()`!",
       "Then jump to `(0, -10)` and call:\n`t.write(f\"Hello, {clean}!\", align=\"center\", font=(\"Arial\", 20, \"bold\"))`",
     ],
     check(runResult, h) {
@@ -248,9 +257,14 @@ raw = input("Enter your hero name: ")
         calls.includes("len");
       const usedFStringWrite = Boolean(astInfo?.hasFString) && h.countWrites(commands) >= 1;
       const closedBoxes = h.splitClosedShapes(segments).filter((p) => h.isClosedPath(p));
+      const allColors = new Set([
+        ...segments.map((s) => String(s.color || "").toLowerCase()),
+        ...commands
+          .filter((c) => (c.cmd === "end_fill" || c.cmd === "dot" || c.cmd === "write") && c.color)
+          .map((c) => String(c.color).toLowerCase()),
+      ]);
       const bonusOk =
-        Boolean(astInfo?.hasIf) &&
-        (h.countFills(commands) >= 1 || h.countDistinctColors(segments) >= 2);
+        Boolean(astInfo?.hasIf) && h.countFills(commands) >= 1 && allColors.size >= 2;
 
       const goals = [
         { label: "Use `input()`, `.strip()`, `.lower()`, and `len()`", passed: cleanedText },
@@ -346,11 +360,11 @@ t = turtle.Turtle()
 t.pensize(3)
 
 def turn_angle(sides):
-    # 1. Return 360 / sides instead of pass!
+    # 1. Delete pass (placeholder) and return 360 / sides!
     pass
 
 def ring_color(step):
-    # 2. Return a different color string depending on step % 3!
+    # 2. Delete pass and return a color string depending on step % 3!
     pass
 
 # 3. Call your Answer Machines to draw 2+ closed polygons and print an f-string!
@@ -365,15 +379,19 @@ def ring_color(step):
     bonusGoal: "Bonus Star: Draw 3+ different polygon counts (`sides`) with 3+ returned colors!",
     hints: [
       "Write `return 360 / sides` inside `turn_angle(sides)`, and `if step % 3 == 0: return \"indigo\"` / `elif step % 3 == 1: return \"dodgerblue\"` / `else: return \"coral\"` inside `ring_color(step)`!",
-      "Then loop `for idx, s in enumerate([3, 4, 6]):` (or `for s in [3, 4, 5]:`) setting `angle = turn_angle(s)` and `t.pencolor(ring_color(idx))` so all 3 colors shine!",
+      "Then loop `for step in range(3):` with `sides = 3 + step` (draws 3, 4, and 5 sides!), setting `angle = turn_angle(sides)` and `t.pencolor(ring_color(step))`!",
       "Finish with `print(f\"Hexagon turn angle = {turn_angle(6)}\")`!",
     ],
     check(runResult, h) {
       const { astInfo, stdout, turtleData } = runResult;
       const { segments } = turtleData;
       const topDefs = astInfo?.topLevelDefNames || [];
-      const calledDefs = topDefs.filter((fn) => (astInfo?.defCallCounts?.[fn] || 0) >= 1);
-      const hasReturnMachine = Boolean(astInfo?.hasReturnValue) && calledDefs.length >= 1;
+      const calledReturnDefs = topDefs.filter(
+        (fn) =>
+          (astInfo?.defCallCounts?.[fn] || 0) >= 1 &&
+          Boolean(astInfo?.defHasReturnValue?.[fn])
+      );
+      const hasReturnMachine = calledReturnDefs.length >= 1;
 
       const paths = h.splitClosedShapes(segments);
       const polyCount = paths.filter((p) => {
@@ -397,7 +415,7 @@ def ring_color(step):
         Boolean(astInfo?.hasFString) &&
         String(stdout || "").trim().length > 0;
       const bonusOk =
-        calledDefs.length >= 2 && polyKinds.size >= 3 && h.countDistinctColors(segments) >= 3;
+        calledReturnDefs.length >= 2 && polyKinds.size >= 3 && h.countDistinctColors(segments) >= 3;
 
       const goals = [
         { label: "Define and call helper function(s) with `return`", passed: hasReturnMachine },

@@ -76,6 +76,8 @@ const PYTHON_BUILTINS = [
   "for",
   "while",
   "break",
+  "continue",
+  "pass",
   "if",
   "else",
   "elif",
@@ -391,15 +393,25 @@ export function translatePythonError(rawTraceback, code = "") {
       };
     }
 
-    const argMatch = lastLine.match(/takes (\d+) positional argument.*but (\d+) were given/);
+    const argMatch = lastLine.match(/takes (\d+) positional argument.*but (\d+) (?:was|were) given/);
     if (argMatch) {
-      const isBoundMethod = /Turtle\.[A-Za-z_]+\(\)|Screen\.[A-Za-z_]+\(\)/.test(lastLine);
-      const expected = Math.max(0, Number(argMatch[1]) - (isBoundMethod ? 1 : 0));
-      const given = Math.max(0, Number(argMatch[2]) - (isBoundMethod ? 1 : 0));
+      const isTurtleBound = /Turtle\.[A-Za-z_]+\(\)|Screen\.[A-Za-z_]+\(\)/.test(lastLine);
+      const rawExpected = Number(argMatch[1]);
+      const rawGiven = Number(argMatch[2]);
+      const expected = Math.max(0, rawExpected - (isTurtleBound ? 1 : 0));
+      const given = Math.max(0, rawGiven - (isTurtleBound ? 1 : 0));
+      const looksLikeMissingSelf =
+        !isTurtleBound && rawGiven === rawExpected + 1 && /\bclass\s+[A-Za-z_]/.test(code);
       return {
-        title: `Wrong Number of Inputs${line ? ` on Line ${line}` : ""}`,
-        explanation: `That command expected ${expected} input(s), but got ${given}.`,
-        tip: "Check what goes inside the `(...)`—for example, `t.goto(x, y)` needs 2 numbers, while `t.forward(100)` needs 1.",
+        title: looksLikeMissingSelf
+          ? `Did You Forget \`self\`?${line ? ` on Line ${line}` : ""}`
+          : `Wrong Number of Inputs${line ? ` on Line ${line}` : ""}`,
+        explanation: looksLikeMissingSelf
+          ? `Python automatically passes the object (\`self\`) into every method inside a \`class\`, so it passed ${rawGiven} input(s) to a method expecting ${rawExpected}.`
+          : `That command expected ${expected} input(s), but got ${given}.`,
+        tip: looksLikeMissingSelf
+          ? "Put `self` as the very first parameter of every method inside a `class`—for example, `def draw(self):` or `def draw_square(self, x, y):`!"
+          : "Check what goes inside the `(...)`—for example, `t.goto(x, y)` needs 2 numbers, while `t.forward(100)` needs 1.",
         line,
         rawTraceback: text,
       };

@@ -32,7 +32,7 @@ colors = ["red", "orange", "gold", "green"]
 # 2. print() len(colors), colors[0], and colors[-1]!
 
 
-# 3. Loop 10+ times, rotating & changing color with colors[i % len(colors)]!
+# 3. Loop 12+ times, rotating & changing color with colors[i % len(colors)]!
 `,
     blueprint: null,
     showGridDefault: false,
@@ -139,13 +139,20 @@ t.pendown()
       const { segments, commands } = turtleData;
       const usedTupleList = Boolean(astInfo?.hasTuple) && Boolean(astInfo?.hasList);
       const dots = h.countDots(commands);
-      const quads = h.visitedQuadrants(segments, commands);
-      const unpackedLoop = Boolean(astInfo?.hasFor) && dots >= 5 && segments.length >= 4;
+      const nonZeroSegs = segments.filter((s) => h.segmentLength(s) > 0.5);
+      const quads = h.visitedQuadrants(nonZeroSegs, commands);
+      const unpackedLoop = Boolean(astInfo?.hasFor) && dots >= 5 && nonZeroSegs.length >= 4;
       const skySpan = quads.size >= 3;
 
-      const paths = h.getConnectedPaths(segments);
-      const bonusOk =
-        paths.some((p) => h.isClosedPath(p, 8)) || h.countFills(commands) >= 1 || dots >= 7;
+      const paths = h.getConnectedPaths(nonZeroSegs);
+      const hasClosedLoop = paths.some((p) => h.isClosedPath(p, 8));
+      const hasFill = h.countFills(commands) >= 1;
+      const bonusOk = hasClosedLoop || hasFill || dots >= 7;
+      const bonusFeedback = hasClosedLoop
+        ? "Closed star constellation unlocked!"
+        : hasFill
+          ? "Night-sky planet bonus unlocked!"
+          : "Mega 7+ star constellation unlocked!";
 
       const goals = [
         { label: "Use `(x, y)` tuples inside a list (`5+` stars)", passed: usedTupleList && dots >= 5 },
@@ -156,7 +163,7 @@ t.pendown()
       let feedback = `Constellation mapped! Tuple coordinates unpacked cleanly across ${quads.size} quadrants.`;
       if (!passed) {
         if (!usedTupleList) feedback = "Store `(x, y)` coordinates as tuples inside your `stars` list!";
-        else if (dots < 5 || segments.length < 4) feedback = "Make sure `stars` has at least 5 `(x, y)` tuples and your `for` loop runs `t.goto(x, y)` and `t.dot(...)` for each one!";
+        else if (dots < 5 || nonZeroSegs.length < 4) feedback = "Make sure `stars` has at least 5 `(x, y)` tuples and your `for` loop runs `t.goto(x, y)` and `t.dot(...)` for each one!";
         else feedback = "Spread your stars into at least 3 different quadrants (mix positive & negative `x` and `y`)!";
       }
       return {
@@ -164,7 +171,7 @@ t.pendown()
         goals,
         feedback,
         bonusPassed: passed && bonusOk,
-        bonusFeedback: "Closed star constellation unlocked!",
+        bonusFeedback,
       };
     },
   },
@@ -321,16 +328,17 @@ steps = 0
 
 while True:
     steps += 1
-    x = random.randint(-190, 190)
-    y = random.randint(-150, 150)
+    # Pick random (x, y) cleanly inside one of the 4 quadrants (away from 0)!
+    x = random.choice([-1, 1]) * random.randint(25, 190)
+    y = random.choice([-1, 1]) * random.randint(25, 150)
     t.penup()
     t.goto(x, y)
     t.pendown()
 
     # 1. Pick zone = "Q1", "Q2", "Q3", or "Q4" based on x and y!
     # 2. Drop a t.dot(...) and add zone to visited using visited.add(zone)!
-    # 3. Replace this starter safety brake with: if len(visited) == 4: break
-    if steps >= 8:
+    # 3. Replace this 2-hop starter brake with: if len(visited) == 4: break
+    if steps >= 2:
         break
 
 print("Explored all corners:", visited, "in", steps, "hops!")
@@ -339,41 +347,48 @@ print("Explored all corners:", visited, "in", steps, "hops!")
     showGridDefault: true,
     goals: [
       "Track visited zones in a `set()` using `.add()`",
-      "Stop a `while` loop cleanly with `break`",
+      "Stop a `while` loop cleanly with `len(visited)` + `break`",
       "Explore and mark all 4 quadrants (`4/4`)",
     ],
     bonusGoal: "Bonus Star: Stamp a bright gold dot ONLY when `zone not in visited` (a brand-new discovery!), and another color on repeat visits!",
     hints: [
-      "Figure out the quadrant with:\n`if x > 10 and y > 10: zone = \"Q1\"`\n`elif x < -10 and y > 10: zone = \"Q2\"`\n`elif x < -10 and y < -10: zone = \"Q3\"`\n`elif x > 10 and y < -10: zone = \"Q4\"`\n`else: continue` (or skip axes!)",
-      "Note: to award the Bonus Star, check `if zone not in visited: t.dot(18, \"gold\")` / `else: t.dot(10, \"skyblue\")` BEFORE `visited.add(zone)`!",
-      "Don't forget a backup safety brake (like `if len(visited) == 4 or steps >= 80: break`) so your hunt always ends cleanly!",
+      "Figure out the quadrant with:\n`if x > 0 and y > 0:`\n`    zone = \"Q1\"`\n`elif x < 0 and y > 0:`\n`    zone = \"Q2\"`\n`elif x < 0 and y < 0:`\n`    zone = \"Q3\"`\n`else:`\n`    zone = \"Q4\"`",
+      "For the Bonus Star, check `if zone not in visited:` (gold dot) / `else:` (skyblue dot) BEFORE `visited.add(zone)`!",
+      "Finish the loop with:\n`if len(visited) == 4 or steps >= 80:`\n`    break`",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
       const { segments, commands } = turtleData;
       const calls = astInfo?.callNames || [];
       const usedSet = Boolean(astInfo?.hasSet) && calls.includes("add");
-      const usedWhileBreak = Boolean(astInfo?.hasWhile) && Boolean(astInfo?.hasBreak);
-      const quads = h.visitedQuadrants(segments, commands);
+      const usedWhileBreak =
+        Boolean(astInfo?.hasWhile) &&
+        Boolean(astInfo?.hasBreak) &&
+        Boolean(astInfo?.hasIf) &&
+        calls.includes("len");
+      const quads = h.visitedQuadrants(segments, commands, { axisMargin: 0 });
       const dots = h.countDots(commands);
       const exploredAll = quads.size === 4 && (dots >= 4 || segments.length >= 4);
 
       const dotColors = new Set(
         commands.filter((c) => c.cmd === "dot" && c.color).map((c) => String(c.color).toLowerCase())
       );
-      const bonusOk = dotColors.size >= 2 && dots >= 4;
+      const bonusOk =
+        Boolean(astInfo?.hasInOp) &&
+        Boolean(astInfo?.hasElifOrElse) &&
+        (dotColors.size >= 2 || (dots === 4 && quads.size === 4));
 
       const goals = [
         { label: "Use a `set()` and `.add()` to prevent duplicates", passed: usedSet },
-        { label: "Use `while` + `break` when all 4 corners are found", passed: usedWhileBreak },
+        { label: "Use `while` + `len(visited)` + `break` when all 4 corners are found", passed: usedWhileBreak },
         { label: `Visit and mark all 4 quadrants (${quads.size}/4 visited)`, passed: exploredAll },
       ];
       const passed = usedSet && usedWhileBreak && exploredAll;
       let feedback = "Treasure hunt complete! Your `set` tracked every unique quadrant until `len(visited) == 4` triggered `break`.";
       if (!passed) {
         if (!usedSet) feedback = "Keep `visited = set()` and call `visited.add(zone)` for each quadrant!";
-        else if (!usedWhileBreak) feedback = "Use a `while True:` loop with `if len(visited) == 4: break`!";
-        else feedback = `Only ${quads.size}/4 quadrants were marked on canvas—make sure \`t.dot(...)\` runs inside the loop and replace \`if steps >= 8: break\` with \`if len(visited) == 4 or steps >= 80: break\`!`;
+        else if (!usedWhileBreak) feedback = "Use `if len(visited) == 4:` with `break` inside your `while True:` loop!";
+        else feedback = `Only ${quads.size}/4 quadrants were marked on canvas—make sure \`t.dot(...)\` runs inside the loop and replace \`if steps >= 2: break\` with \`if len(visited) == 4 or steps >= 80: break\`!`;
       }
       return {
         passed,

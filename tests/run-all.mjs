@@ -22,7 +22,7 @@ import {
   saveState,
   STORAGE_KEY,
 } from "../js/state/store.js";
-import { verifyMission } from "../js/verifier/checker.js";
+import { splitClosedShapes, verifyMission } from "../js/verifier/checker.js";
 import { buildResetPinSql, parseResetPinArgs } from "../scripts/reset-pin.mjs";
 import { validatePin } from "../worker/crypto.js";
 import workerDefault, { handleApiRequest } from "../worker/index.js";
@@ -650,7 +650,7 @@ for job in jobs:
     code = job["code"]
     pre_inputs = list(job.get("preInputs", []))
     _turtle_mod._reset_runtime()
-    random.seed(42)
+    random.seed(job.get("seed", 42))
     out_buf = io.StringIO()
     err_lines = []
     old_out, old_err, old_in = sys.stdout, sys.stderr, builtins.input
@@ -934,10 +934,11 @@ print("Total:", total, "2^4:", 2 ** 4)`,
   "u7-l2": `import turtle, random
 t = turtle.Turtle()
 t.penup(); t.goto(-140, 100); t.pendown()
-for w, h in [(280, 90), (200, 90), (280, 90), (200, 90)]:
-    t.forward(w); t.right(h)
+for i in range(2):
+    t.forward(280); t.right(90)
+    t.forward(200); t.right(90)
 t.penup(); t.home(); t.pendown()
-for _ in range(28):
+for _ in range(36):
     t.setheading(random.randint(0, 359)); t.forward(40)
     x, y = t.xcor(), t.ycor()
     if x < -130 or x > 130 or y < -90 or y > 90:
@@ -948,6 +949,8 @@ for _ in range(28):
 t = turtle.Turtle()
 raw = input("Name: ")
 clean = raw.strip().lower()
+if len(clean) == 0:
+    clean = "hero"
 w = max(160, len(clean) * 20 + 80)
 if clean[0] == "m":
     t.pencolor("indigo")
@@ -971,11 +974,12 @@ def ring_color(step):
     elif step % 3 == 1:
         return "dodgerblue"
     return "coral"
-for idx, s in enumerate([3, 4, 6]):
-    t.penup(); t.goto(-150 + idx * 120, 40); t.pendown()
-    t.pencolor(ring_color(idx))
-    ang = turn_angle(s)
-    for _ in range(s):
+for step in range(3):
+    sides = 3 + step
+    t.penup(); t.goto(-150 + step * 120, 40); t.pendown()
+    t.pencolor(ring_color(step))
+    ang = turn_angle(sides)
+    for _ in range(sides):
         t.forward(55); t.right(ang)
 print(f"Hexagon angle: {turn_angle(6)}")`,
   "u8-l1": `import turtle
@@ -1016,19 +1020,17 @@ visited = set()
 steps = 0
 while True:
     steps += 1
-    x = random.randint(-180, 180)
-    y = random.randint(-140, 140)
+    x = random.choice([-1, 1]) * random.randint(25, 190)
+    y = random.choice([-1, 1]) * random.randint(25, 150)
     t.penup(); t.goto(x, y); t.pendown()
-    if x > 15 and y > 15:
+    if x > 0 and y > 0:
         zone = "Q1"
-    elif x < -15 and y > 15:
+    elif x < 0 and y > 0:
         zone = "Q2"
-    elif x < -15 and y < -15:
+    elif x < 0 and y < 0:
         zone = "Q3"
-    elif x > 15 and y < -15:
-        zone = "Q4"
     else:
-        zone = "Q1"
+        zone = "Q4"
     if zone not in visited:
         t.dot(18, "gold")
     else:
@@ -1143,15 +1145,14 @@ await runTest("All 36 coding lessons: starterCode NEVER auto-passes, solutions +
     }
     const lesson = nodeById.get(res.id);
     if (res.kind === "starter") {
-      if (res.ok) {
-        const v = verifyMission(lesson, res);
-        assert.equal(v.passed, false, `Starter code for ${res.id} unexpectedly auto-passed!`);
-        assert.equal(
-          v.goals.length,
-          lesson.goals.length,
-          `Starter check goal count mismatch on ${res.id}: expected ${lesson.goals.length}, got ${v.goals.length}`
-        );
-      }
+      assert.equal(res.ok, true, `Starter code crashed on ${res.id}: ${res.error}`);
+      const v = verifyMission(lesson, res);
+      assert.equal(v.passed, false, `Starter code for ${res.id} unexpectedly auto-passed!`);
+      assert.equal(
+        v.goals.length,
+        lesson.goals.length,
+        `Starter check goal count mismatch on ${res.id}: expected ${lesson.goals.length}, got ${v.goals.length}`
+      );
     } else {
       assert.equal(res.ok, true, `Reference solution crashed on ${res.id}: ${res.error}`);
       const v = verifyMission(lesson, res);
@@ -1255,6 +1256,168 @@ t.penup(); t.goto(0, -165); t.pencolor("white"); t.write("LOOPED", align="center
   const v = verifyMission(u9l4, res);
   assert.equal(v.passed, true, JSON.stringify(v));
   assert.equal(v.bonusPassed, true, JSON.stringify(v));
+
+  // 4. Multi-seed stress test across all randomized lessons (30 seeds each) + u7-l3 whitespace input
+  const nodeById = new Map(ALL_NODES.map((n) => [n.id, n]));
+  const stressJobs = [];
+  const randomIds = ["u5-l3", "u5-l4", "u6-l3", "u7-l2", "u8-l4"];
+  for (const id of randomIds) {
+    const preInputs = id === "u6-l3" ? ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"] : [];
+    for (let seed = 0; seed < 30; seed++) {
+      stressJobs.push({ id, kind: `seed-${seed}`, code: REFERENCE_SOLUTIONS[id], preInputs, seed });
+    }
+  }
+  stressJobs.push({ id: "u7-l3", kind: "blank-input", code: REFERENCE_SOLUTIONS["u7-l3"], preInputs: ["   "], seed: 1 });
+  const stressResults = runPythonCurriculumBatch(stressJobs);
+  for (const r of stressResults) {
+    assert.equal(r.ok, true, `${r.id} (${r.kind}) crashed: ${r.error}`);
+    const checkRes = verifyMission(nodeById.get(r.id), r);
+    assert.equal(checkRes.passed, true, `${r.id} (${r.kind}) failed: ${checkRes.feedback}`);
+    assert.equal(checkRes.bonusPassed, true, `${r.id} (${r.kind}) missed bonus: ${JSON.stringify(checkRes)}`);
+  }
+
+  // 5. Anti-cheat & edge-case checks from independent review
+  const edgeJobs = [
+    // u8-l4 trivial 8-step brake without len() must NOT pass
+    {
+      id: "u8-l4-cheat",
+      kind: "neg",
+      seed: 42,
+      code: `import turtle, random
+t = turtle.Turtle()
+visited = set()
+steps = 0
+while True:
+    steps += 1
+    t.penup(); t.goto(random.randint(-190, 190), random.randint(-150, 150)); t.pendown()
+    t.dot(14, "gold")
+    visited.add("Q1")
+    if steps >= 8:
+        break`,
+    },
+    // u7-l2 broken impossible `and` fence must NOT pass
+    {
+      id: "u7-l2-broken-and",
+      kind: "neg",
+      seed: 0,
+      code: `import turtle, random
+t = turtle.Turtle()
+for _ in range(36):
+    t.setheading(random.randint(0, 359)); t.forward(40)
+    x, y = t.xcor(), t.ycor()
+    if x < -130 and x > 130 and y < -90 and y > 90:
+        t.setheading(t.towards(0, 0)); t.forward(45)`,
+    },
+    // u7-l4 uncalled return function + called non-returning function must NOT pass
+    {
+      id: "u7-l4-uncalled-return",
+      kind: "neg",
+      code: `import turtle
+t = turtle.Turtle()
+def unused_return(sides):
+    return 360 / sides
+def draw_sq():
+    for _ in range(4):
+        t.forward(60); t.right(90)
+draw_sq(); t.penup(); t.goto(90, 0); t.pendown(); draw_sq()
+print(f"done {4}")`,
+    },
+    // u9-l2 multi-class (CircleBot 1x + StampBot 2x) MUST pass
+    {
+      id: "u9-l2-multiclass",
+      kind: "pos",
+      code: `import turtle
+t = turtle.Turtle()
+class CircleBot:
+    def __init__(self, pen, color):
+        self.pen = pen; self.color = color
+    def draw(self, x, y):
+        self.pen.penup(); self.pen.goto(x, y); self.pen.pendown()
+        self.pen.pencolor(self.color); self.pen.circle(30)
+class StampBot:
+    def __init__(self, pen, color, size):
+        self.pen = pen; self.color = color; self.size = size
+    def draw_square(self, x, y):
+        self.pen.penup(); self.pen.goto(x, y); self.pen.pendown()
+        self.pen.pencolor(self.color)
+        for _ in range(4):
+            self.pen.forward(self.size); self.pen.right(90)
+c1 = CircleBot(t, "teal"); c1.draw(-120, 0)
+b1 = StampBot(t, "crimson", 60); b1.draw_square(0, 40)
+b2 = StampBot(t, "dodgerblue", 80); b2.draw_square(90, 40)`,
+    },
+    // u9-l4 dot-based OOP scene MUST pass, and turtle.hideturtle() must NOT award multi-turtle bonus
+    {
+      id: "u9-l4-dots-single-turtle",
+      kind: "pos",
+      code: `import turtle
+turtle.hideturtle()
+t = turtle.Turtle()
+class Star:
+    def __init__(self, x, y, size, col):
+        self.x = x; self.y = y; self.size = size; self.col = col
+    def draw(self, pen):
+        pen.penup(); pen.goto(self.x, self.y)
+        if self.size > 10:
+            pen.dot(self.size, self.col)
+stars = [Star(-100, 80, 20, "gold"), Star(100, 80, 20, "coral"), Star(-100, -80, 20, "cyan"), Star(100, -80, 20, "violet")]
+for s in stars:
+    s.draw(t)`,
+    },
+    // py-turtle-shim default_turtle precedence + gold vs amber distinctness + AST iter outside loop
+    {
+      id: "shim-and-ast-check",
+      kind: "meta",
+      code: `import turtle
+turtle.speed(0)
+t = turtle.Turtle()
+t.pencolor("gold"); t.forward(150)
+t.pencolor("amber"); t.forward(150)
+class Planet:
+    def __init__(self, n):
+        self.n = n
+for p in [Planet(1)]:
+    pass`,
+    },
+    // Interleaved two-turtle closed shapes in splitClosedShapes()
+    {
+      id: "interleaved-turtles",
+      kind: "meta",
+      code: `import turtle
+a = turtle.Turtle(); b = turtle.Turtle()
+a.penup(); a.goto(-120, 40); a.pendown()
+b.penup(); b.goto(40, 40); b.pendown()
+for _ in range(4):
+    a.forward(60); a.right(90)
+    b.forward(60); b.right(90)`,
+    },
+  ];
+  const edgeRes = Object.fromEntries(runPythonCurriculumBatch(edgeJobs).map((r) => [r.id, r]));
+
+  assert.equal(verifyMission(nodeById.get("u8-l4"), edgeRes["u8-l4-cheat"]).passed, false);
+  assert.equal(verifyMission(nodeById.get("u7-l2"), edgeRes["u7-l2-broken-and"]).passed, false);
+  assert.equal(verifyMission(nodeById.get("u7-l4"), edgeRes["u7-l4-uncalled-return"]).passed, false);
+  assert.equal(verifyMission(nodeById.get("u9-l2"), edgeRes["u9-l2-multiclass"]).passed, true);
+
+  const u9Dots = verifyMission(nodeById.get("u9-l4"), edgeRes["u9-l4-dots-single-turtle"]);
+  assert.equal(u9Dots.passed, true, JSON.stringify(u9Dots));
+  assert.equal(u9Dots.bonusPassed, false, "turtle.hideturtle() should NOT trigger multi-turtle bonus");
+
+  const shimMeta = edgeRes["shim-and-ast-check"];
+  assert.equal(shimMeta.turtleData.finalState.x, 300);
+  assert.notEqual(shimMeta.turtleData.segments[0].color, shimMeta.turtleData.segments[1].color);
+  assert.equal(shimMeta.astInfo.hasClassCalledInLoop.Planet, false);
+
+  const interleavedShapes = splitClosedShapes(edgeRes["interleaved-turtles"].turtleData.segments);
+  assert.equal(interleavedShapes.length, 2, `Expected 2 intact interleaved shapes, got ${interleavedShapes.length}`);
+
+  // 6. Error helper singular "1 was given" missing-self hint
+  const selfErr = translatePythonError(
+    'File "<user_code>", line 4\nTypeError: draw() takes 0 positional arguments but 1 was given',
+    "class StampBot:\n    def draw():\n        pass\nStampBot().draw()"
+  );
+  assert.ok(selfErr.title.includes("self"), JSON.stringify(selfErr));
+  assert.ok(selfErr.tip.includes("def draw(self"), JSON.stringify(selfErr));
 });
 
 console.log(`\nALL ${passed} TEST SUITES PASSED!`);

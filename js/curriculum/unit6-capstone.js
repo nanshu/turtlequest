@@ -321,7 +321,7 @@ t.pensize(4)
     unitId: "unit6",
     type: "quiz",
     icon: "⚡",
-    title: "Final Boss Check: Python Master",
+    title: "Boss Check: Python Explorer",
     subtitle: "Clock math, recursion, & `while` loops",
     xp: 25,
     questions: [
@@ -372,12 +372,12 @@ t.pensize(4)
     unitId: "unit6",
     type: "code",
     icon: "🛡️",
-    title: "Final Capstone: Design Your Crest",
+    title: "Unit 6 Capstone: Design Your Crest",
     subtitle: "Open creative project combining all your skills!",
     xp: 75,
     bonusXp: 25,
     story:
-      "You've reached the **Final Capstone**! Design your own custom Shield, Flag, or Geometric Crest using everything you've mastered: a custom `def` function, a `for` loop, 3+ colors, a filled shape, and your emblem's title with `t.write(...)`!",
+      "You've reached the **Unit 6 Capstone**! Design your own custom Shield, Flag, or Geometric Crest using everything you've mastered so far: a custom `def` function, a `for` loop, 3+ colors, a filled shape, and your emblem's title with `t.write(...)`!",
     mathTip:
       "Pro design tip: combine symmetry across all 4 quadrants (`(±x, ±y)`) with a central polygon or 144° star and a bold banner title!",
     starterCode: `import turtle

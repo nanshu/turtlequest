@@ -74,7 +74,7 @@ _NAMED_COLORS = {
     "dodgerblue": "#1e90ff",
     "deepskyblue": "#00bfff",
     "crimson": "#dc2626",
-    "amber": "#f59e0b",
+    "amber": "#d97706",
     "rose": "#f43f5e",
 }
 
@@ -85,6 +85,7 @@ _state = {
     "colormode": 1.0,
     "turtles": {},
     "default_turtle": None,
+    "last_active_turtle_id": None,
     "next_id": 1,
     "next_group": 1,
     "flushed_index": 0,
@@ -98,6 +99,7 @@ def _reset_runtime():
     _state["colormode"] = 1.0
     _state["turtles"] = {}
     _state["default_turtle"] = None
+    _state["last_active_turtle_id"] = None
     _state["next_id"] = 1
     _state["next_group"] = 1
     _state["flushed_index"] = 0
@@ -192,6 +194,7 @@ class Turtle:
         )
 
     def _move_to(self, nx, ny, line_override=None, group=None):
+        _state["last_active_turtle_id"] = self._id
         ox, oy = self._x, self._y
         self._x = float(nx)
         self._y = float(ny)
@@ -235,6 +238,7 @@ class Turtle:
         _state["commands"].append(cmd_obj)
 
     def _turn_by(self, delta_deg, line_override=None, group=None):
+        _state["last_active_turtle_id"] = self._id
         old_h = self._heading
         self._heading = (self._heading + float(delta_deg)) % 360.0
         line = line_override if line_override is not None else _get_user_line()
@@ -422,6 +426,7 @@ class Turtle:
         return self._filling
 
     def dot(self, size=None, *color_args):
+        _state["last_active_turtle_id"] = self._id
         if size is not None and (isinstance(size, bool) or not isinstance(size, (int, float))):
             color_args = (size,) + color_args
             size = None
@@ -430,6 +435,7 @@ class Turtle:
         _record("dot", id=self._id, x=self._x, y=self._y, size=dot_size, color=dot_color)
 
     def stamp(self):
+        _state["last_active_turtle_id"] = self._id
         _record(
             "stamp",
             id=self._id,
@@ -440,6 +446,7 @@ class Turtle:
         )
 
     def write(self, arg, move=False, align="left", font=("Arial", 14, "normal")):
+        _state["last_active_turtle_id"] = self._id
         size = 14
         family = "sans-serif"
         weight = "normal"
@@ -881,10 +888,15 @@ def _flush_commands():
 
 
 def _export_state():
-    active = _state["default_turtle"]
-    if active is None and _state["turtles"]:
-        first_key = next(iter(_state["turtles"]))
-        active = _state["turtles"][first_key]
+    active = None
+    last_id = _state.get("last_active_turtle_id")
+    if last_id and last_id in _state["turtles"]:
+        active = _state["turtles"][last_id]
+    elif _state["turtles"]:
+        last_key = list(_state["turtles"].keys())[-1]
+        active = _state["turtles"][last_key]
+    elif _state["default_turtle"] is not None:
+        active = _state["default_turtle"]
 
     turtles_map = {}
     for tid, t in _state["turtles"].items():

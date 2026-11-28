@@ -19,7 +19,7 @@ export const UNIT_9_NODES = [
     story:
       "Every time you call `turtle.Turtle()`, Python stamps out a brand-new **object** from the `Turtle` blueprint—each remembering its own position, angle, and pen color! Hatch **`leo`** AND **`maya`**, send them to opposite sides, and have **both** draw closed shapes!",
     mathTip:
-      "Mirror symmetry across the y-axis: if `leo` starts at `(-140, 40)` turning `right(90)`, his mirror twin `maya` can start at `(140, 40)` turning `left(90)`!",
+      "Mirror symmetry across the y-axis: if `leo` starts at `(-140, 40)` facing East (`0°`) turning `right(90)`, his mirror twin `maya` can start at `(140, 40)` facing West (`maya.setheading(180)`) turning `left(90)`!",
     starterCode: `import turtle
 
 # Turtle Object #1: leo
@@ -113,11 +113,11 @@ t.pensize(3)
 
 class StampBot:
     def __init__(self, pen, color, size):
-        # 1. Save self.pen = pen, self.color = color, self.size = size!
+        # 1. Delete pass (temporary placeholder) and save self.pen, self.color, self.size!
         pass
 
     def draw_square(self, x, y):
-        # 2. Move self.pen to (x, y), set pencolor(self.color), and draw a square of self.size!
+        # 2. Delete pass, move self.pen to (x, y), set pencolor(self.color), and draw a square of self.size!
         pass
 
 # 3. Build 2+ StampBot objects with DIFFERENT colors & sizes and call .draw_square(...)!
@@ -133,33 +133,47 @@ bot1 = StampBot(t, "crimson", 70)
     bonusGoal: "Bonus Star: Add a second method (like `.draw_triangle(...)` or `.grow(...)`) and draw 3+ shapes!",
     hints: [
       "Inside `__init__` (indented 8 spaces):\n`self.pen = pen`\n`self.color = color`\n`self.size = size`",
-      "Inside `draw_square(self, x, y)`:\n`self.pen.penup(); self.pen.goto(x, y); self.pen.pendown()`\n`self.pen.pencolor(self.color)`\n`for i in range(4): self.pen.forward(self.size); self.pen.right(90)`",
+      "Inside `draw_square(self, x, y)`:\n`self.pen.penup()`\n`self.pen.goto(x, y)`\n`self.pen.pendown()`\n`self.pen.pencolor(self.color)`\n`for i in range(4):`\n`    self.pen.forward(self.size)`\n`    self.pen.right(90)`",
       "At the bottom, add `bot2 = StampBot(t, \"dodgerblue\", 110)` then call `bot1.draw_square(-140, 40)` and `bot2.draw_square(20, 60)`!",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
       const { segments } = turtleData;
       const classNames = astInfo?.classNames || [];
+      const validClasses = classNames.filter((cls) => {
+        const ms = astInfo?.classMethodNames?.[cls] || [];
+        return ms.includes("__init__") && ms.some((m) => m !== "__init__");
+      });
       const matchingClass =
-        classNames.find((cls) => {
-          const ms = astInfo?.classMethodNames?.[cls] || [];
-          return ms.includes("__init__") && ms.some((m) => m !== "__init__");
-        }) || classNames[0];
+        validClasses.find(
+          (cls) =>
+            (astInfo?.classCallCounts?.[cls] || 0) >= 2 ||
+            Boolean(astInfo?.hasClassCalledInLoop?.[cls])
+        ) ||
+        validClasses[0] ||
+        classNames[0];
       const methods = matchingClass ? astInfo?.classMethodNames?.[matchingClass] || [] : [];
-      const hasInit = methods.includes("__init__") && Boolean(astInfo?.hasSelfAttr);
-      const hasDrawMethod = methods.some((m) => m !== "__init__");
-      const instancesCount = matchingClass ? astInfo?.classCallCounts?.[matchingClass] || 0 : 0;
-      const loopedInstances = matchingClass
-        ? Boolean(astInfo?.hasClassCalledInLoop?.[matchingClass])
-        : false;
+      const hasInit = validClasses.length >= 1 && Boolean(astInfo?.hasSelfAttr);
+      const hasDrawMethod = validClasses.length >= 1;
+      const totalValidInstances = validClasses.reduce(
+        (sum, cls) => sum + (astInfo?.classCallCounts?.[cls] || 0),
+        0
+      );
+      const loopedValid = validClasses.some((cls) =>
+        Boolean(astInfo?.hasClassCalledInLoop?.[cls])
+      );
 
       const paths = h.splitClosedShapes(segments);
       const closedShapes = paths.filter((p) => h.isClosedPath(p));
       const distinctColors = h.countDistinctColors(segments);
 
-      const bonusOk = methods.length >= 3 && closedShapes.length >= 3;
+      const maxMethodsOnClass = validClasses.reduce(
+        (best, cls) => Math.max(best, (astInfo?.classMethodNames?.[cls] || []).length),
+        methods.length
+      );
+      const bonusOk = maxMethodsOnClass >= 3 && closedShapes.length >= 3;
       const builtEnoughInstances =
-        instancesCount >= 2 || (loopedInstances && closedShapes.length >= 2);
+        totalValidInstances >= 2 || (loopedValid && closedShapes.length >= 2);
 
       const goals = [
         { label: "Define a `class` with `__init__` and `self` attributes", passed: Boolean(astInfo?.hasClassDef) && hasInit },
@@ -173,7 +187,7 @@ bot1 = StampBot(t, "crimson", 70)
         builtEnoughInstances &&
         closedShapes.length >= 2 &&
         distinctColors >= 2;
-      let feedback = `Blueprint engineer! Your \`${matchingClass || "StampBot"}\` class built ${loopedInstances ? "multiple" : instancesCount} independent objects.`;
+      let feedback = `Blueprint engineer! Your \`${matchingClass || "StampBot"}\` class built ${loopedValid ? "multiple" : totalValidInstances} independent objects.`;
       if (!passed) {
         if (!astInfo?.hasClassDef || !hasInit) feedback = "Inside `__init__`, save your object's data on `self` (`self.pen = pen`, `self.color = color`, `self.size = size`)!";
         else if (!hasDrawMethod) feedback = "Add a method like `def draw_square(self, x, y):` inside your class!";
@@ -217,7 +231,7 @@ class Planet:
         self.color = color
 
     def draw(self, pen):
-        # Move pen to (self.x, self.y) with penup() and draw a big pen.dot(self.radius * 2, self.color)!
+        # Delete pass (temporary placeholder), move pen to (self.x, self.y) with penup(), and draw pen.dot(self.radius * 2, self.color)!
         pass
 
 # Add 2+ more Planet objects so your galaxy list has 4+ planets!
@@ -239,7 +253,7 @@ planets = [
     hints: [
       "Inside `def draw(self, pen):`:\n`pen.penup()`\n`pen.goto(self.x, self.y)`\n`pen.dot(self.radius * 2, self.color)`",
       "Add Mars (`\"coral\"`) and Saturn (`\"orange\"` / `\"violet\"`) inside `planets = [...]` so there are 4+ planets!",
-      "At the bottom, loop:\n`for p in planets:`\n`    p.draw(t)`\nAnd add `pen.pencolor(\"white\"); pen.goto(self.x, self.y - self.radius - 18); pen.write(self.name, align=\"center\")` for the Bonus Star!",
+      "At the bottom, loop:\n`for p in planets:`\n`    p.draw(t)`\nAnd inside `draw`, add:\n`pen.pencolor(\"white\")`\n`pen.goto(self.x, self.y - self.radius - 18)`\n`pen.write(self.name, align=\"center\")` for the Bonus Star!",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
@@ -399,18 +413,18 @@ show = [
     hints: [
       "Add 2+ more bursts inside `show = [...]` across other quadrants:\n`Firework(120, 75, 55, 10, \"coral\"),`\n`Firework(-60, -70, 48, 8, \"cyan\"),`\n`Firework(95, -80, 70, 12, \"violet\"),`",
       "Add an `if` check inside `launch` (`if self.size >= 55: pen.dot(8, \"white\")`) AND loop `for fw in show: fw.launch(t)`!",
-      "Sign the bottom sky for the Bonus Star:\n`t.penup(); t.goto(0, -165); t.pencolor(\"white\")`\n`t.write(\"TURTLE ARCHITECT\", align=\"center\", font=(\"Arial\", 18, \"bold\"))`",
+      "Sign the bottom sky for the Bonus Star:\n`t.penup()`\n`t.goto(0, -165)`\n`t.pencolor(\"white\")`\n`t.write(\"TURTLE ARCHITECT\", align=\"center\", font=(\"Arial\", 18, \"bold\"))`",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
-      const { segments, commands, turtleCount } = turtleData;
+      const { segments, commands } = turtleData;
       const totalInstances = Object.values(astInfo?.classCallCounts || {}).reduce((a, b) => a + b, 0);
       const anyLoopedClass = Object.values(astInfo?.hasClassCalledInLoop || {}).some(Boolean);
       const instanceCountLabel = anyLoopedClass ? "looped" : totalInstances;
       const usedOopObjects =
         Boolean(astInfo?.hasClassDef) &&
         Boolean(astInfo?.hasSelfAttr) &&
-        (totalInstances >= 3 || (anyLoopedClass && totalInstances >= 1 && (segments.length >= 12 || h.countDots(commands) >= 3)));
+        (totalInstances >= 3 || (anyLoopedClass && totalInstances >= 1 && (segments.length >= 12 || h.countDots(commands) >= 3 || h.countStamps(commands) >= 3)));
 
       const usedCoreTools =
         (Boolean(astInfo?.hasList) || Boolean(astInfo?.hasDict)) &&
@@ -420,18 +434,16 @@ show = [
       const allColors = new Set([
         ...segments.map((s) => String(s.color || "").toLowerCase()),
         ...commands
-          .filter((c) => (c.cmd === "dot" || c.cmd === "end_fill" || c.cmd === "write") && c.color)
+          .filter((c) => (c.cmd === "dot" || c.cmd === "end_fill" || c.cmd === "write" || c.cmd === "stamp") && c.color)
           .map((c) => String(c.color).toLowerCase()),
       ]);
       const quads = h.visitedQuadrants(segments, commands);
-      const richScene = allColors.size >= 3 && quads.size >= 3 && segments.length >= 12;
+      const hasEnoughArt =
+        segments.length >= 12 || h.countDots(commands) >= 4 || h.countStamps(commands) >= 4;
+      const richScene = allColors.size >= 3 && quads.size >= 3 && hasEnoughArt;
 
-      const distinctTurtles = Math.max(
-        turtleCount || 0,
-        astInfo?.turtleCtorCalls || 0,
-        h.countDistinctTurtles(segments, commands)
-      );
-      const bonusOk = h.countWrites(commands) >= 1 || distinctTurtles >= 2;
+      const activeTurtles = h.countActiveTurtles(segments, commands);
+      const bonusOk = h.countWrites(commands) >= 1 || activeTurtles >= 2;
 
       const goals = [
         { label: `Define a \`class\` and create 3+ objects (${instanceCountLabel} created)`, passed: usedOopObjects },
@@ -450,7 +462,7 @@ show = [
         goals,
         feedback,
         bonusPassed: passed && bonusOk,
-        bonusFeedback: distinctTurtles >= 2 ? "Multi-turtle Architect Finale!" : "Signed Architect Finale!",
+        bonusFeedback: activeTurtles >= 2 ? "Multi-turtle Architect Finale!" : "Signed Architect Finale!",
       };
     },
   },

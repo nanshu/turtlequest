@@ -30,22 +30,29 @@ export function getConnectedPaths(segments, options = {}) {
   const nonZero = (segments || []).filter((s) => segmentLength(s) > minSegLen);
   if (nonZero.length === 0) return [];
 
-  const rawGroups = [];
-  let current = [nonZero[0]];
-
-  for (let i = 1; i < nonZero.length; i++) {
-    const prev = current[current.length - 1];
-    const seg = nonZero[i];
-    const sameTurtle =
-      prev.turtle_id === undefined || seg.turtle_id === undefined || prev.turtle_id === seg.turtle_id;
-    if (sameTurtle && pointsClose({ x: prev.x2, y: prev.y2 }, { x: seg.x1, y: seg.y1 }, tol)) {
-      current.push(seg);
-    } else {
-      rawGroups.push(current);
-      current = [seg];
-    }
+  // Partition by turtle_id first so interleaved multi-turtle draws stay connected per turtle
+  const byTurtle = new Map();
+  for (const seg of nonZero) {
+    const tid = seg.turtle_id === undefined ? "__default__" : seg.turtle_id;
+    if (!byTurtle.has(tid)) byTurtle.set(tid, []);
+    byTurtle.get(tid).push(seg);
   }
-  rawGroups.push(current);
+
+  const rawGroups = [];
+  for (const turtleSegs of byTurtle.values()) {
+    let current = [turtleSegs[0]];
+    for (let i = 1; i < turtleSegs.length; i++) {
+      const prev = current[current.length - 1];
+      const seg = turtleSegs[i];
+      if (pointsClose({ x: prev.x2, y: prev.y2 }, { x: seg.x1, y: seg.y1 }, tol)) {
+        current.push(seg);
+      } else {
+        rawGroups.push(current);
+        current = [seg];
+      }
+    }
+    rawGroups.push(current);
+  }
 
   return rawGroups.map((group) => {
     const merged = [];
@@ -122,25 +129,32 @@ export function splitClosedShapes(segments, options = {}) {
       : { tol: 2.5, mergeAngleDeg: 3.0, minSegLen: 0.5, closeTol: 5.0, ...options };
   const closeTol = opts.closeTol ?? 5.0;
 
-  // Use raw non-zero segments split by turtle & jump, then split closed cycles before collinear-merging each shape
+  // Partition by turtle_id first so interleaved multi-turtle draws stay intact before cycle splitting
   const nonZero = (segments || []).filter((s) => segmentLength(s) > opts.minSegLen);
   if (nonZero.length === 0) return [];
 
-  const groups = [];
-  let current = [nonZero[0]];
-  for (let i = 1; i < nonZero.length; i++) {
-    const prev = current[current.length - 1];
-    const seg = nonZero[i];
-    const sameTurtle =
-      prev.turtle_id === undefined || seg.turtle_id === undefined || prev.turtle_id === seg.turtle_id;
-    if (sameTurtle && pointsClose({ x: prev.x2, y: prev.y2 }, { x: seg.x1, y: seg.y1 }, opts.tol)) {
-      current.push(seg);
-    } else {
-      groups.push(current);
-      current = [seg];
-    }
+  const byTurtle = new Map();
+  for (const seg of nonZero) {
+    const tid = seg.turtle_id === undefined ? "__default__" : seg.turtle_id;
+    if (!byTurtle.has(tid)) byTurtle.set(tid, []);
+    byTurtle.get(tid).push(seg);
   }
-  groups.push(current);
+
+  const groups = [];
+  for (const turtleSegs of byTurtle.values()) {
+    let current = [turtleSegs[0]];
+    for (let i = 1; i < turtleSegs.length; i++) {
+      const prev = current[current.length - 1];
+      const seg = turtleSegs[i];
+      if (pointsClose({ x: prev.x2, y: prev.y2 }, { x: seg.x1, y: seg.y1 }, opts.tol)) {
+        current.push(seg);
+      } else {
+        groups.push(current);
+        current = [seg];
+      }
+    }
+    groups.push(current);
+  }
 
   const shapes = [];
   for (const group of groups) {
@@ -234,10 +248,10 @@ export function hasCustomColor(segments) {
   });
 }
 
-export function visitedQuadrants(segments, commands = []) {
+export function visitedQuadrants(segments, commands = [], { axisMargin = 8 } = {}) {
   const quads = new Set();
   const checkPt = (x, y) => {
-    if (Math.abs(x) <= 8 || Math.abs(y) <= 8) return;
+    if (Math.abs(x) <= axisMargin || Math.abs(y) <= axisMargin) return;
     if (x > 0 && y > 0) quads.add(1);
     else if (x < 0 && y > 0) quads.add(2);
     else if (x < 0 && y < 0) quads.add(3);
@@ -343,6 +357,19 @@ export function countDistinctTurtles(segments, commands = []) {
   return ids.size;
 }
 
+export function countActiveTurtles(segments, commands = []) {
+  const ids = new Set();
+  for (const s of segments || []) {
+    if (segmentLength(s) > 0.5 && s.turtle_id) ids.add(s.turtle_id);
+  }
+  for (const c of commands || []) {
+    if ((c.cmd === "dot" || c.cmd === "stamp" || c.cmd === "write" || c.cmd === "end_fill") && c.id) {
+      ids.add(c.id);
+    }
+  }
+  return ids.size;
+}
+
 export function segmentsByTurtle(segments) {
   const byTurtle = new Map();
   for (const s of segments || []) {
@@ -380,6 +407,7 @@ export const VERIFY_HELPERS = {
   countWrites,
   countStamps,
   countDistinctTurtles,
+  countActiveTurtles,
   segmentsByTurtle,
   writtenTexts,
   hasPenUpJump,

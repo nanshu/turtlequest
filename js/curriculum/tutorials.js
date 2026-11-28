@@ -692,8 +692,10 @@ t.write("MY CREST", align="center", font=("Arial", 20, "bold"))`,
   "u7-l2": [
     {
       title: "Guarding Both Walls With `and` / `or`",
-      body: "To keep your turtle inside the `[-130..130] × [-90..90]` safe zone, bounce back whenever it crosses ANY of the 4 walls using `or`:",
-      code: `if x < -130 or x > 130 or y < -90 or y > 90:
+      body: "Use `t.xcor()` and `t.ycor()` to read your turtle's current `(x, y)` coordinates! To keep your turtle inside the `[-130..130] × [-90..90]` safe zone, bounce back whenever it crosses ANY of the 4 walls using `or`:",
+      code: `x = t.xcor()
+y = t.ycor()
+if x < -130 or x > 130 or y < -90 or y > 90:
     t.dot(10, "red")
     t.setheading(t.towards(0, 0))
     t.forward(45)`,
@@ -703,23 +705,25 @@ t.write("MY CREST", align="center", font=("Arial", 20, "bold"))`,
   "u7-l3": [
     {
       title: "Cleaning Text & Formatting f-Strings",
-      body: "People type messy spaces or ALL CAPS in `input()`. Clean it up first, measure `len(clean)`, and format your greeting with an `f\"...\"` string!",
+      body: "People type messy spaces or ALL CAPS in `input()`. Clean it up with `.strip().lower()`, guard empty input (`if len(clean) == 0:`), pick a comfortable box width with `max(160, ...)`, and format your greeting with an `f\"...\"` string!",
       code: `clean = raw.strip().lower()
+if len(clean) == 0:
+    clean = "hero"
 width = max(160, len(clean) * 22 + 90)
 t.write(f"Hello, {clean}!", align="center", font=("Arial", 20, "bold"))`,
-      tip: "Check `clean[0]` (the very first letter!) with `if` to pick your favorite border color and fill your banner!",
+      tip: "Python counts letters from `0`, so `clean[0]` is the very first letter! Use `if clean[0] == ...:` with `t.begin_fill()` and 2+ colors for the ⭐ Bonus Star!",
     },
   ],
   "u7-l4": [
     {
       title: "Writing Answer Machines With `return`",
-      body: "When a function uses **`return`**, it doesn't just print—it hands back an answer your main program can plug right into `t.right(...)` or `t.pencolor(...)`!",
+      body: "When a function uses **`return`**, it doesn't just print—it hands back an answer your main program can plug right into `t.right(...)` or `t.pencolor(...)`! Delete `pass` (a temporary placeholder) and replace it with `return ...`:",
       code: `def turn_angle(sides):
     return 360 / sides
 
 angle = turn_angle(6)   # angle is 60.0!
 print(f"Hexagon angle: {angle}")`,
-      tip: "Define BOTH `turn_angle(sides)` and `ring_color(step)` returning values, then loop through `[3, 4, 6]`!",
+      tip: "Loop `for step in range(3):` with `sides = 3 + step` (draws 3-, 4-, and 5-sided shapes) and `t.pencolor(ring_color(step))` for all 3 colors!",
     },
   ],
   "u8-l1": [
@@ -797,7 +801,7 @@ bot2.draw_square(20, 60)`,
       body: "Store all your `Planet(...)` instances inside a `planets = [...]` list, then draw them all in just 2 lines!",
       code: `for p in planets:
     p.draw(t)`,
-      tip: "Inside `draw(self, pen)`, use `pen.dot(self.radius * 2, self.color)` and `pen.write(self.name, align=\"center\")` for a labeled galaxy!",
+      tip: "Inside `draw(self, pen)`, use `pen.dot(self.radius * 2, self.color)`, then set `pen.pencolor(\"white\")` before `pen.write(self.name, align=\"center\")` so labels shine on the dark sky!",
     },
   ],
   "u9-l4": [
@@ -824,6 +828,7 @@ export const CHEAT_SHEET_SECTIONS = [
       { code: "t.setheading(90)", desc: "Point in an exact direction: `0`=East, `90`=North, `180`=West, `270`=South" },
       { code: "t.circle(60)", desc: "Draw a circle with radius 60 (negative radius curves right)" },
       { code: "t.home()", desc: "Return to `(0, 0)` facing East (`0°`)" },
+      { code: "x = t.xcor()\ny = t.ycor()", desc: "Read the turtle's current `x` and `y` coordinates on the grid" },
     ],
   },
   {
