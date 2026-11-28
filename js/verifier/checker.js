@@ -332,6 +332,34 @@ export function countStamps(commands) {
   return (commands || []).filter((c) => c.cmd === "stamp").length;
 }
 
+export function countDistinctTurtles(segments, commands = []) {
+  const ids = new Set();
+  for (const s of segments || []) {
+    if (s.turtle_id) ids.add(s.turtle_id);
+  }
+  for (const c of commands || []) {
+    if (c.cmd === "spawn" && c.id) ids.add(c.id);
+  }
+  return ids.size;
+}
+
+export function segmentsByTurtle(segments) {
+  const byTurtle = new Map();
+  for (const s of segments || []) {
+    if (segmentLength(s) <= 0.5) continue;
+    const tid = s.turtle_id || "t1";
+    if (!byTurtle.has(tid)) byTurtle.set(tid, []);
+    byTurtle.get(tid).push(s);
+  }
+  return byTurtle;
+}
+
+export function writtenTexts(commands) {
+  return (commands || [])
+    .filter((c) => c.cmd === "write" && typeof c.text === "string")
+    .map((c) => c.text);
+}
+
 export const VERIFY_HELPERS = {
   segmentLength,
   pointsClose,
@@ -351,6 +379,9 @@ export const VERIFY_HELPERS = {
   countDots,
   countWrites,
   countStamps,
+  countDistinctTurtles,
+  segmentsByTurtle,
+  writtenTexts,
   hasPenUpJump,
   extractPrintedNumbers,
 };

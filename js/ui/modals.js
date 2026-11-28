@@ -1,4 +1,4 @@
-import { CHEAT_SHEET_SECTIONS } from "../curriculum/index.js";
+import { CHEAT_SHEET_SECTIONS, UNITS } from "../curriculum/index.js";
 import { TURTLE_SKINS } from "../state/progress.js";
 import { exportStateJSON } from "../state/store.js";
 import { escapeHtml, formatInlineText } from "./format.js";
@@ -148,7 +148,7 @@ export function showVictoryModal({
   wrap.innerHTML = `
     <div class="modal-card" style="text-align:center;" role="dialog" aria-modal="true">
       <div style="font-size:3.2rem; margin-bottom:6px;">${bonusEarned ? "🌟" : "🎉"}</div>
-      <h2 style="margin-bottom:8px;">${escapeHtml(title)} Complete!</h2>
+      <h2 style="margin-bottom:8px;">${formatInlineText(title)} Complete!</h2>
       <p style="color:var(--text-muted); margin-top:0;">${formatInlineText(feedback)}</p>
 
       <div style="display:flex; justify-content:center; gap:12px; margin:16px 0;">
@@ -168,7 +168,7 @@ export function showVictoryModal({
         ${
           hasNext
             ? `<button id="victory-next-btn" class="btn btn-green" type="button">Next Mission ➜</button>`
-            : `<button id="victory-next-btn" class="btn btn-purple" type="button">🏆 You Mastered All 6 Units! Back to Path</button>`
+            : `<button id="victory-next-btn" class="btn btn-purple" type="button">🏆 You Mastered All ${UNITS.length} Units! Back to Path</button>`
         }
         <div style="display:flex; gap:10px; justify-content:center;">
           <button id="victory-tinker-btn" class="btn btn-ghost btn-sm" type="button">Keep Tinkering</button>

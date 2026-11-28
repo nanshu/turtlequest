@@ -46,24 +46,24 @@ t.pensize(4)
 
 sides = 5
 length = 90
-angle = 360 / sides
+# 1. Calculate angle = 360 / sides and print() it!
 
-print("Turn angle:", angle)
 
+# 2. Finish the loop: turn right by angle!
 for i in range(sides):
     t.forward(length)
-    t.right(angle)
+    
 `,
     blueprint: makePolygonBlueprint(5, 90, 0, 0),
     showGridDefault: false,
     goals: [
       "Store values in variables and use a `for` loop",
       "Draw a regular 5-sided pentagon",
-      "Print the turn angle (72) using print()",
+      "Print the turn angle (72) using `print()`",
     ],
-    bonusGoal: "Bonus Star: Also print() the pentagon's perimeter (sides * length)!",
+    bonusGoal: "Bonus Star: Also `print()` the pentagon's perimeter (`sides * length`)!",
     hints: [
-      "Hit Run! The starter code is almost ready—or customize `length` and watch both the drawing and printed math update.",
+      "Create `angle = 360 / sides`, add `print(\"Turn angle:\", angle)`, and put `t.right(angle)` inside the `for` loop!",
       "To earn the Bonus Star, add `print(\"Perimeter:\", sides * length)`!",
       "Keep `sides = 5` and `angle = 360 / sides` so `print()` outputs `72` (or `72.0`).",
     ],
@@ -135,6 +135,7 @@ for i in range(24):
     showGridDefault: false,
     goals: [
       "Use a `for` loop",
+      "Turn each step to spiral outward",
       "Draw 16+ segments that grow longer each step",
     ],
     bonusGoal: "Bonus Star: Draw 28+ segments with an off-90° twist (like 91°, 89°, or 72°)!",
@@ -230,7 +231,7 @@ for i in range(4):
       "Draw 2 separate closed squares",
       "Make the big square's side 2× the small square's side (1:2 ratio)",
     ],
-    bonusGoal: "Bonus Star: print() both areas (small * small and big * big)!",
+    bonusGoal: "Bonus Star: `print()` both areas (`small * small` and `big * big`)!",
     hints: [
       "Use `t.penup()`, `t.goto(10, 60)`, and `t.pendown()` before drawing the big square.",
       "Then loop 4 times with `t.forward(big)` and `t.right(90)`!",
@@ -324,6 +325,19 @@ for i in range(4):
         correctIndex: 1,
         explanation: "Doubling both width AND height multiplies area by `2 × 2 = 4`!",
       },
+      {
+        prompt: "Spot the bug! Why does Python raise `NameError: name 'lenght' is not defined`?",
+        code: `length = 80
+t.forward(lenght)`,
+        options: [
+          "The variable name was spelled `length` on line 1, but misspelled `lenght` on line 2",
+          "You cannot pass a variable inside `t.forward()`",
+          "80 is missing quotes",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Variable names must match letter-for-letter (and uppercase/lowercase too) every time you use them!",
+      },
     ],
   },
   {
@@ -356,7 +370,7 @@ t.dot(14, "red")
     blueprint: null,
     showGridDefault: true,
     goals: [
-      "Use t.goto(x, y) coordinates",
+      "Use `t.goto(x, y)` coordinates",
       "Draw shapes or dots in all 4 quadrants",
     ],
     bonusGoal: "Bonus Star: Place 4+ colorful t.dot() stars OR connect all 4 quadrants into a giant closed diamond!",

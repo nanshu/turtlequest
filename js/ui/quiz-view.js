@@ -16,7 +16,7 @@ export function renderQuizView(container, node, { onBack, onComplete }) {
         xpReward: node.xp || 20,
         bonusReward: perfect ? 5 : 0,
         bonusEarned: perfect,
-        bonusFeedback: perfect ? "Perfect 3/3 on the first try!" : "",
+        bonusFeedback: perfect ? `Perfect ${totalUnique}/${totalUnique} on the first try!` : "",
         feedback: `You nailed ${firstPassCorrect} / ${totalUnique} on the first try!`,
       });
       return;
@@ -56,7 +56,7 @@ export function renderQuizView(container, node, { onBack, onComplete }) {
           </span>
         </div>
 
-        <div class="xp-badge" style="display:inline-block; margin-bottom:10px;">⚡ ${escapeHtml(node.title)}</div>
+        <div class="xp-badge" style="display:inline-block; margin-bottom:10px;">⚡ ${formatInlineText(node.title)}</div>
         <h2 style="margin:0 0 10px; font-size:1.25rem;">${formatInlineText(q.prompt)}</h2>
 
         ${q.code ? `<pre class="quiz-code-block"><code>${escapeHtml(q.code)}</code></pre>` : ""}
@@ -128,7 +128,7 @@ export function renderQuizView(container, node, { onBack, onComplete }) {
               xpReward: node.xp || 20,
               bonusReward: perfect ? 5 : 0,
               bonusEarned: perfect,
-              bonusFeedback: perfect ? "Perfect 3/3 on the first try!" : "",
+              bonusFeedback: perfect ? `Perfect ${totalUnique}/${totalUnique} on the first try!` : "",
               feedback: `You nailed ${firstPassCorrect} / ${totalUnique} on the first try!`,
             });
             if (ok === false && nextBtn.isConnected) {

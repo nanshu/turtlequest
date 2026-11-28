@@ -31,7 +31,7 @@ export const UNIT_4_NODES = [
     type: "code",
     icon: "🧩",
     title: "Your First Function",
-    subtitle: "Define def draw_square(size): and reuse it!",
+    subtitle: "Define `def draw_square(size):` and reuse it!",
     xp: 35,
     bonusXp: 15,
     story:
@@ -325,6 +325,19 @@ def draw_box():
         options: ["36°", "45°", "60°"],
         correctIndex: 1,
         explanation: "When `sides = 8`, `360 ÷ 8 = 45°`—an octagon!",
+      },
+      {
+        prompt: "Spot the bug! Why does Python show an `IndentationError` here?",
+        code: `def draw_line(size):
+t.forward(size)`,
+        options: [
+          "Line 2 must be indented by 4 spaces so it sits inside `def draw_line(size):`",
+          "`def` cannot take `size` inside parentheses",
+          "It needs a semicolon `;` at the end",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Every line inside a `def` function body must be indented 4 spaces right after the colon `:`!",
       },
     ],
   },

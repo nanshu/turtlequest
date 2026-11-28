@@ -186,14 +186,40 @@ export class TurtleRenderer {
     }
 
     // 6. Turtle Avatars + Optional Step Heading Pointer
+    const multiTurtle = (this.scene.turtles || []).filter((t) => t.visible).length > 1;
     for (const turtle of this.scene.turtles) {
       if (!turtle.visible) continue;
       if (this.showHeadingPointer) {
         this._drawHeadingPointer(ctx, turtle.x, turtle.y, turtle.heading);
       }
-      this._drawAvatar(ctx, turtle.x, turtle.y, turtle.heading, this.skin, 1);
+      if (multiTurtle) {
+        this._drawTurtleHalo(ctx, turtle.x, turtle.y, turtle.penColor);
+      }
+      this._drawAvatar(
+        ctx,
+        turtle.x,
+        turtle.y,
+        turtle.heading,
+        this.skin,
+        1,
+        multiTurtle ? turtle.penColor : null
+      );
     }
 
+    ctx.restore();
+  }
+
+  _drawTurtleHalo(ctx, x, y, penColor) {
+    const { cx, cy } = this.worldToCanvas(x, y);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.strokeStyle = penColor || "#1e293b";
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
     ctx.restore();
   }
 

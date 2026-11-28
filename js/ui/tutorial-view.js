@@ -117,6 +117,70 @@ t.right(90)</code></pre>
     `;
   }
 
+  if (kind === "return-machine") {
+    return `
+      <div class="tutorial-diagram-card var-boxes-row">
+        <div class="var-box">
+          <div class="var-box-label">Input</div>
+          <div class="var-box-val" style="font-size:1.05rem;">sides = 5</div>
+        </div>
+        <div class="anatomy-dot">→</div>
+        <div class="var-box accent">
+          <div class="var-box-label">def turn_angle</div>
+          <div class="var-box-val" style="font-size:1.05rem;">360 / 5</div>
+        </div>
+        <div class="anatomy-dot">→</div>
+        <div class="var-box" style="border-color:var(--green);">
+          <div class="var-box-label" style="background:var(--green-soft); color:#266000;">return!</div>
+          <div class="var-box-val" style="color:var(--green-dark);">72.0</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (kind === "collection-cards") {
+    return `
+      <div class="tutorial-diagram-card compare-grid">
+        <div class="var-box">
+          <div class="var-box-label">🚂 list [ ... ]</div>
+          <div class="var-box-val" style="font-size:0.86rem; font-weight:700;">["red", "gold", "teal"]<br/><span style="color:var(--text-muted); font-size:0.75rem;">Ordered! colors[0], .append()</span></div>
+        </div>
+        <div class="var-box">
+          <div class="var-box-label">📌 tuple ( ... )</div>
+          <div class="var-box-val" style="font-size:0.86rem; font-weight:700;">(-100, 80)<br/><span style="color:var(--text-muted); font-size:0.75rem;">Locked (x, y) pairs!</span></div>
+        </div>
+        <div class="var-box accent">
+          <div class="var-box-label">📖 dict { k: v }</div>
+          <div class="var-box-val" style="font-size:0.86rem; font-weight:700;">{"square": 4, "hex": 6}<br/><span style="color:var(--text-muted); font-size:0.75rem;">Name -> value lookup!</span></div>
+        </div>
+        <div class="var-box" style="border-color:var(--orange);">
+          <div class="var-box-label" style="background:#fff3e0; color:#9a3412;">🎒 set( )</div>
+          <div class="var-box-val" style="font-size:0.86rem; font-weight:700;">{"Q1", "Q2", "Q3"}<br/><span style="color:var(--text-muted); font-size:0.75rem;">No duplicates allowed!</span></div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (kind === "class-blueprint") {
+    return `
+      <div class="tutorial-diagram-card var-boxes-row">
+        <div class="var-box accent" style="min-width:165px;">
+          <div class="var-box-label">📐 Blueprint: class StampBot</div>
+          <div class="var-box-val" style="font-size:0.84rem; font-weight:700; text-align:left;">self.color<br/>self.size<br/>.draw_square(x, y)</div>
+        </div>
+        <div class="anatomy-dot">→</div>
+        <div class="var-box" style="border-color:#dc2626;">
+          <div class="var-box-label" style="background:#fee2e2; color:#991b1b;">bot1</div>
+          <div class="var-box-val" style="font-size:0.86rem;">color="crimson"<br/>size=70</div>
+        </div>
+        <div class="var-box" style="border-color:#2563eb;">
+          <div class="var-box-label" style="background:#dbeafe; color:#1e40af;">bot2</div>
+          <div class="var-box-val" style="font-size:0.86rem;">color="blue"<br/>size=110</div>
+        </div>
+      </div>
+    `;
+  }
+
   return "";
 }
 
@@ -580,6 +644,370 @@ function mountTreeExplorerWidget(mountEl) {
   update();
 }
 
+function mountLogicGateLabWidget(mountEl) {
+  let xOk = true;
+  let yOk = true;
+  let idx = 5;
+
+  mountEl.innerHTML = `
+    <div class="widget-box">
+      <div style="margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+          <label id="logic-idx-label" style="font-weight:900; font-size:0.86rem;"></label>
+          <input id="logic-idx-slider" type="range" min="0" max="11" value="${idx}" style="width:150px;" />
+        </div>
+        <div id="logic-cells" style="display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:5px;"></div>
+      </div>
+
+      <div style="border-top:1.5px solid var(--border-light); padding-top:10px;">
+        <div class="widget-controls" style="align-items:center;">
+          <button id="toggle-x-btn" class="btn btn-green btn-sm" type="button"></button>
+          <button id="toggle-y-btn" class="btn btn-green btn-sm" type="button"></button>
+        </div>
+        <pre class="mini-code-block"><code id="logic-code"></code></pre>
+      </div>
+    </div>
+  `;
+
+  const idxLabelEl = mountEl.querySelector("#logic-idx-label");
+  const cellsEl = mountEl.querySelector("#logic-cells");
+  const xBtnEl = mountEl.querySelector("#toggle-x-btn");
+  const yBtnEl = mountEl.querySelector("#toggle-y-btn");
+  const codeEl = mountEl.querySelector("#logic-code");
+
+  function update() {
+    const andRes = xOk && yOk;
+    const orRes = xOk || yOk;
+    const notRes = !andRes;
+    const row = Math.floor(idx / 4);
+    const col = idx % 4;
+
+    idxLabelEl.innerHTML = `Grid Index <code>i = ${idx}</code> → <code>row = ${idx} // 4 = ${row}</code>, <code>col = ${idx} % 4 = ${col}</code>`;
+    cellsEl.innerHTML = Array.from({ length: 12 }, (_, k) => {
+      const r = Math.floor(k / 4);
+      const c = k % 4;
+      const active = k === idx;
+      return `
+        <div style="border-radius:8px; padding:5px 4px; text-align:center; font-size:0.72rem; font-weight:800; border:2px solid ${
+          active ? "#4338ca" : "#cbd5e1"
+        }; background:${active ? "#6366f1" : "#ffffff"}; color:${active ? "#ffffff" : "#475569"};">
+          i=${k} (${r},${c})
+        </div>
+      `;
+    }).join("");
+
+    xBtnEl.className = `btn ${xOk ? "btn-green" : "btn-coral"} btn-sm`;
+    xBtnEl.textContent = `x inside (-130..130): ${xOk ? "True" : "False"}`;
+    yBtnEl.className = `btn ${yOk ? "btn-green" : "btn-coral"} btn-sm`;
+    yBtnEl.textContent = `y inside (-90..90): ${yOk ? "True" : "False"}`;
+
+    codeEl.textContent =
+      `x_ok = ${xOk ? "True" : "False"}   y_ok = ${yOk ? "True" : "False"}\n` +
+      `x_ok and y_ok       -> ${andRes ? "True  (Both inside box!)" : "False (At least 1 crossed!)"}\n` +
+      `x_ok or y_ok        -> ${orRes ? "True  (At least 1 safe!)" : "False (Both crossed!)"}\n` +
+      `not (x_ok and y_ok) -> ${notRes ? "True  (Bounce back!)" : "False"}`;
+  }
+
+  mountEl.querySelector("#logic-idx-slider").addEventListener("input", (e) => {
+    idx = Number(e.target.value);
+    soundFX.playStep();
+    update();
+  });
+  xBtnEl.addEventListener("click", () => {
+    xOk = !xOk;
+    soundFX.playStep();
+    update();
+  });
+  yBtnEl.addEventListener("click", () => {
+    yOk = !yOk;
+    soundFX.playStep();
+    update();
+  });
+
+  update();
+}
+
+function mountCollectionExplorerWidget(mountEl) {
+  let tab = "list";
+  const palettePool = ["dodgerblue", "purple", "coral", "teal"];
+  const colors = ["red", "orange", "gold", "green"];
+  let selectedIdx = 0;
+  const shapesDict = { triangle: 3, square: 4, pentagon: 5, hexagon: 6 };
+  let lookupKey = "hexagon";
+  let setItems = ["Q1", "Q2"];
+  let setStatus = "Click any quadrant below to test seen.add(...)!";
+
+  function renderWidget() {
+    let bodyHtml = "";
+    if (tab === "list") {
+      const boxes = colors
+        .map(
+          (c, i) => `
+          <button data-lidx="${i}" type="button" style="border:2px solid ${
+            selectedIdx === i ? "#0f172a" : "#cbd5e1"
+          }; background:${c}; color:#ffffff; text-shadow:0 1px 2px rgba(0,0,0,0.45); border-radius:10px; padding:6px 10px; font-weight:900; font-size:0.8rem;">
+            [${i}] "${c}"
+          </button>
+        `
+        )
+        .join("");
+      bodyHtml = `
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">${boxes}</div>
+        <div class="widget-controls">
+          <button id="list-append-btn" class="btn btn-gold btn-sm" type="button" ${
+            colors.length >= 6 ? "disabled" : ""
+          }>➕ colors.append(...)</button>
+          <button id="list-reset-btn" class="btn btn-ghost btn-sm" type="button">↺ Reset List</button>
+        </div>
+        <pre class="mini-code-block"><code>colors = ${JSON.stringify(colors)}
+len(colors) -> ${colors.length}
+colors[${selectedIdx}]   -> "${colors[selectedIdx]}"
+colors[-1]  -> "${colors[colors.length - 1]}"  # Last item!</code></pre>
+      `;
+    } else if (tab === "dict") {
+      const keys = ["triangle", "square", "hexagon", "dragon"];
+      const btns = keys
+        .map(
+          (k) => `
+          <button data-dkey="${k}" type="button" class="btn ${
+            lookupKey === k ? "btn-purple" : "btn-ghost"
+          } btn-sm">"${k}"</button>
+        `
+        )
+        .join("");
+      const found = Object.prototype.hasOwnProperty.call(shapesDict, lookupKey);
+      bodyHtml = `
+        <div class="widget-controls">${btns}</div>
+        <pre class="mini-code-block"><code>shapes = {"triangle": 3, "square": 4, "pentagon": 5, "hexagon": 6}
+name = "${lookupKey}"
+if name in shapes:
+    ${found ? `print(shapes[name])  # Found: ${shapesDict[lookupKey]} sides!` : `# Won't run (not in dict)`}
+else:
+    ${found ? `# Not needed` : `print("Unknown spell! Avoided KeyError crash!")`}</code></pre>
+      `;
+    } else {
+      const choices = ["Q1", "Q2", "Q3", "Q4"];
+      const btns = choices
+        .map(
+          (q) =>
+            `<button data-sq="${q}" type="button" class="btn btn-blue btn-sm">seen.add("${q}")</button>`
+        )
+        .join("");
+      bodyHtml = `
+        <div class="widget-controls">
+          ${btns}
+          <button id="set-reset-btn" class="btn btn-ghost btn-sm" type="button">↺ Empty</button>
+        </div>
+        <div style="font-size:0.84rem; font-weight:800; color:var(--orange-dark); margin-bottom:6px;">
+          ${escapeHtml(setStatus)}
+        </div>
+        <pre class="mini-code-block"><code>seen = {${setItems.map((s) => `"${s}"`).join(", ")}}  # size = ${setItems.length}
+len(seen) == 4 -> ${setItems.length === 4 ? "True! Ready to break!" : "False (keep exploring!)"}</code></pre>
+      `;
+    }
+
+    mountEl.innerHTML = `
+      <div class="widget-box">
+        <div class="widget-controls">
+          <button data-ctab="list" class="btn ${tab === "list" ? "btn-green" : "btn-ghost"} btn-sm" type="button">🚂 List</button>
+          <button data-ctab="dict" class="btn ${tab === "dict" ? "btn-purple" : "btn-ghost"} btn-sm" type="button">📖 Dict</button>
+          <button data-ctab="set" class="btn ${tab === "set" ? "btn-blue" : "btn-ghost"} btn-sm" type="button">🎒 Set</button>
+        </div>
+        ${bodyHtml}
+      </div>
+    `;
+
+    mountEl.querySelectorAll("[data-ctab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tab = btn.dataset.ctab;
+        soundFX.playClick();
+        renderWidget();
+      });
+    });
+
+    if (tab === "list") {
+      mountEl.querySelectorAll("[data-lidx]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          selectedIdx = Number(btn.dataset.lidx);
+          soundFX.playStep();
+          renderWidget();
+        });
+      });
+      mountEl.querySelector("#list-append-btn")?.addEventListener("click", () => {
+        const nextColor = palettePool[(colors.length - 4) % palettePool.length];
+        colors.push(nextColor);
+        selectedIdx = colors.length - 1;
+        soundFX.playCorrect();
+        renderWidget();
+      });
+      mountEl.querySelector("#list-reset-btn")?.addEventListener("click", () => {
+        colors.splice(0, colors.length, "red", "orange", "gold", "green");
+        selectedIdx = 0;
+        soundFX.playClick();
+        renderWidget();
+      });
+    } else if (tab === "dict") {
+      mountEl.querySelectorAll("[data-dkey]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          lookupKey = btn.dataset.dkey;
+          soundFX.playStep();
+          renderWidget();
+        });
+      });
+    } else {
+      mountEl.querySelectorAll("[data-sq]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const q = btn.dataset.sq;
+          if (setItems.includes(q)) {
+            soundFX.playStep();
+            setStatus = `"${q}" is ALREADY in seen — duplicate blocked automatically!`;
+          } else {
+            setItems.push(q);
+            soundFX.playCorrect();
+            setStatus =
+              setItems.length === 4
+                ? `Added "${q}"! All 4 unique zones collected (len == 4)!`
+                : `New discovery! Added "${q}" to seen!`;
+          }
+          renderWidget();
+        });
+      });
+      mountEl.querySelector("#set-reset-btn")?.addEventListener("click", () => {
+        setItems = ["Q1", "Q2"];
+        setStatus = "Emptied back to 2 items!";
+        soundFX.playClick();
+        renderWidget();
+      });
+    }
+  }
+
+  renderWidget();
+}
+
+function mountBlueprintFactoryWidget(mountEl) {
+  let chosenColor = "crimson";
+  let chosenSize = 36;
+  let nextBotNum = 2;
+  const bots = [
+    { name: "bot1", color: "crimson", hex: "#dc2626", size: 34, x: 55, y: 65 },
+  ];
+  const colorMap = {
+    crimson: "#dc2626",
+    dodgerblue: "#1e90ff",
+    gold: "#eab308",
+    purple: "#a855f7",
+    teal: "#14b8a6",
+  };
+  const spots = [
+    [55, 65],
+    [135, 50],
+    [95, 130],
+    [195, 110],
+    [195, 45],
+  ];
+
+  mountEl.innerHTML = `
+    <div class="widget-box">
+      <div class="widget-controls" style="align-items:center;">
+        ${Object.keys(colorMap)
+          .map(
+            (c) =>
+              `<button data-bcol="${c}" type="button" class="btn btn-ghost btn-sm">${c}</button>`
+          )
+          .join("")}
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        <label style="font-weight:800; font-size:0.86rem;">
+          Size: <strong id="bot-size-val">${chosenSize}</strong>
+          <input id="bot-size-slider" type="range" min="22" max="54" value="${chosenSize}" style="vertical-align:middle;" />
+        </label>
+        <div style="display:flex; gap:6px;">
+          <button id="spawn-bot-btn" class="btn btn-green btn-sm" type="button">🏭 Spawn StampBot!</button>
+          <button id="reset-bots-btn" class="btn btn-ghost btn-sm" type="button">↺ Clear</button>
+        </div>
+      </div>
+      <div class="widget-split">
+        <svg id="bot-svg" viewBox="0 0 250 185" class="mini-turtle-canvas"></svg>
+        <pre class="mini-code-block live-code-preview"><code id="bot-code"></code></pre>
+      </div>
+    </div>
+  `;
+
+  const sizeValEl = mountEl.querySelector("#bot-size-val");
+  const svgEl = mountEl.querySelector("#bot-svg");
+  const codeEl = mountEl.querySelector("#bot-code");
+  const colorBtns = mountEl.querySelectorAll("[data-bcol]");
+
+  function update() {
+    colorBtns.forEach((btn) => {
+      btn.className = `btn ${btn.dataset.bcol === chosenColor ? "btn-blue" : "btn-ghost"} btn-sm`;
+    });
+    sizeValEl.textContent = String(chosenSize);
+
+    const rectsHtml = bots
+      .map(
+        (b) => `
+        <g>
+          <rect x="${b.x - b.size / 2}" y="${b.y - b.size / 2}" width="${b.size}" height="${b.size}" rx="4"
+                fill="none" stroke="${b.hex}" stroke-width="3" />
+          <text x="${b.x}" y="${b.y + b.size / 2 + 12}" text-anchor="middle" font-size="10" font-weight="800" fill="${b.hex}">${escapeHtml(
+            b.name
+          )} (${b.size})</text>
+        </g>
+      `
+      )
+      .join("");
+    svgEl.innerHTML = `<rect x="0" y="0" width="250" height="185" fill="#ffffff" />${rectsHtml}`;
+
+    codeEl.textContent = bots
+      .slice(-4)
+      .map((b) => `${b.name} = StampBot(t, "${b.color}", ${b.size})\n${b.name}.draw_square(...)`)
+      .join("\n");
+  }
+
+  colorBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      chosenColor = btn.dataset.bcol;
+      soundFX.playStep();
+      update();
+    });
+  });
+  mountEl.querySelector("#bot-size-slider").addEventListener("input", (e) => {
+    chosenSize = Number(e.target.value);
+    sizeValEl.textContent = String(chosenSize);
+  });
+  mountEl.querySelector("#spawn-bot-btn").addEventListener("click", () => {
+    if (bots.length >= 5) bots.shift();
+    const botNum = nextBotNum++;
+    const [sx, sy] = spots[(botNum - 1) % spots.length];
+    bots.push({
+      name: `bot${botNum}`,
+      color: chosenColor,
+      hex: colorMap[chosenColor] || "#3b82f6",
+      size: chosenSize,
+      x: sx,
+      y: sy,
+    });
+    soundFX.playCorrect();
+    update();
+  });
+  mountEl.querySelector("#reset-bots-btn").addEventListener("click", () => {
+    nextBotNum = 2;
+    bots.splice(0, bots.length, {
+      name: "bot1",
+      color: "crimson",
+      hex: "#dc2626",
+      size: 34,
+      x: 55,
+      y: 65,
+    });
+    soundFX.playClick();
+    update();
+  });
+
+  update();
+}
+
 export function renderTutorialView(container, node, { onBack, onComplete }) {
   const steps = node.steps || [];
   let idx = 0;
@@ -637,6 +1065,9 @@ export function renderTutorialView(container, node, { onBack, onComplete }) {
       else if (step.widget === "star-explorer") mountStarExplorerWidget(widgetMount);
       else if (step.widget === "modulo-random") mountModuloRandomWidget(widgetMount);
       else if (step.widget === "tree-explorer") mountTreeExplorerWidget(widgetMount);
+      else if (step.widget === "logic-gate-lab") mountLogicGateLabWidget(widgetMount);
+      else if (step.widget === "collection-explorer") mountCollectionExplorerWidget(widgetMount);
+      else if (step.widget === "blueprint-factory") mountBlueprintFactoryWidget(widgetMount);
     }
 
     container.querySelector("#tut-back-btn").addEventListener("click", onBack);

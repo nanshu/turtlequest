@@ -246,7 +246,130 @@ print("You cracked the code!")`,
         title: "Grow a Recursive Tree Live!",
         body: "Drag the **Levels** and **Branch Angle** sliders below to see how one tiny recursive function builds an entire forest canopy:",
         widget: "tree-explorer",
-        callout: "You're ready for the 4 Boss Missions—let's build a Clock, a Fractal Tree, a Playable Game, and your own Crest!",
+        callout: "You're ready for the Boss Missions—let's build a Clock, a Fractal Tree, a Playable Game, and your own Crest!",
+      },
+    ],
+  },
+
+  unit7: {
+    id: "u7-t0",
+    unitId: "unit7",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Operators, Truth Gates & Smart Text",
+    subtitle: "Division `//` vs `%`, `and`/`or`/`not`, clean strings, & `return`",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • Math Operators Upgrade",
+        title: "`//` (Quotient), `**` (Powers), & `+=` (Counters)",
+        body: "Python gives you 3 speedy math tools:\n• **`//`** gives the whole-number **quotient** (`9 // 4 == 2`), pairing directly with **`%`** remainder (`9 % 4 == 1`)!\n• **`**`** computes **powers/exponents** (`2 ** 3 == 8`, `5 ** 2 == 25`).\n• **`+=`** updates a counter fast (`score += 1` adds 1 to `score`).",
+        code: `row = 7 // 4    # Whole quotient -> 1
+col = 7 % 4     # Remainder      -> 3
+tower = 2 ** 4  # Powers of 2    -> 16
+total += 1      # Shortcut for: total = total + 1`,
+        callout: "With `row = i // 4` and `col = i % 4`, a single loop counts through every row and column of a 2D grid!",
+      },
+      {
+        badge: "Step 2 • Boolean Logic Gates",
+        title: "Combining Questions with `and`, `or`, `not`",
+        body: "Comparisons produce **`True`** or **`False`**. Combine multiple checks inside `if`:\n• **`and`** — BOTH checks must be `True`.\n• **`or`** — at least ONE check must be `True`.\n• **`not`** — flips `True ↔ False`!",
+        widget: "logic-gate-lab",
+        callout: "Use `if x < -130 or x > 130:` to catch a turtle hitting EITHER wall, or `-130 <= x <= 130 and -90 <= y <= 90` for inside the safe box!",
+      },
+      {
+        badge: "Step 3 • Smart Text & `return` Machines",
+        title: "Tidy `str` Text + Functions That Hand Back Answers",
+        body: "Clean typed words with **`.strip().lower()`**, check their size with **`len(word)`**, and plug variables straight into strings with **f-strings** (`f\"Hello, {clean}!\"`).\n\nAnd inside a `def` function, **`return`** turns a recipe into an Answer Machine that sends back a result!",
+        diagram: "return-machine",
+        code: `clean = "  MAYA  ".strip().lower()   # -> "maya"
+banner = f"Hello, {clean}!"           # f-string magic
+
+def turn_angle(sides):
+    return 360 / sides                 # Hands back 72.0!`,
+        callout: "Always save string edits back into a variable (`clean = raw.strip().lower()`), because `.strip()` builds a fresh cleaned string!",
+      },
+    ],
+  },
+
+  unit8: {
+    id: "u8-t0",
+    unitId: "unit8",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Data Containers (`list`, `tuple`, `dict`, `set`)",
+    subtitle: "4 super containers to organize colors, points, lookups & discoveries",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • Meet the 4 Containers",
+        title: "Different Treasure Chests for Different Jobs",
+        body: "Instead of creating 20 separate variables (`c1`, `c2`, `c3`...), Python bundles values inside 4 containers—each with its own bracket style!",
+        diagram: "collection-cards",
+        callout: "Square brackets `[]` = **List** • Parentheses `()` = **Tuple** • Curly `{k: v}` = **Dictionary** • Curly `{a, b}` / `set()` = **Set**!",
+      },
+      {
+        badge: "Step 2 • Interactive Container Lab",
+        title: "Play With Lists, Dicts & Sets Live!",
+        body: "Tap the tabs below to inspect list positions (`[0]` and `[-1]`), look up polygon sides in a dictionary spellbook, and see how a `set` automatically blocks duplicates!",
+        widget: "collection-explorer",
+        callout: "Zero-based counting tip: item #1 is always at index **`[0]`**, and **`[-1]`** grabs the very last item!",
+      },
+      {
+        badge: "Step 3 • `while True:` + `break`",
+        title: "Loop Until a Goal Is Reached",
+        body: "Pair `visited = set()` with **`while True:`** and **`break`**! Inside the loop, keep hopping and adding quadrants with `visited.add(zone)`—then `if len(visited) == 4: break` exits immediately once all 4 are collected!",
+        code: `visited = set()
+while True:
+    # roam & add zone to visited...
+    if len(visited) == 4:
+        break  # Instant exit!`,
+        callout: "Think of `break` as an emergency exit door out of the nearest loop!",
+      },
+    ],
+  },
+
+  unit9: {
+    id: "u9-t0",
+    unitId: "unit9",
+    type: "tutorial",
+    icon: "📖",
+    title: "Guide: Blueprints & Objects (OOP)",
+    subtitle: "Cookie-cutter classes (`class`), `__init__`, `self`, & methods",
+    xp: 15,
+    steps: [
+      {
+        badge: "Step 1 • Cookie Cutters vs. Cookies",
+        title: "What Is a Class? What Is an Object?",
+        body: "You've ALREADY been using a class since Lesson 1! When you write **`leo = turtle.Turtle()`** and **`maya = turtle.Turtle()`**, `Turtle` is the **blueprint (class)** and `leo` and `maya` are two separate **objects (instances)** that each remember their own `(x, y)`, heading, and color!",
+        diagram: "class-blueprint",
+        code: `leo = turtle.Turtle()   # Object #1
+maya = turtle.Turtle()  # Object #2 (independent!)
+leo.pencolor("dodgerblue")
+maya.pencolor("coral")`,
+        callout: "Moving `leo` NEVER moves `maya`—each object carries its own personal data!",
+      },
+      {
+        badge: "Step 2 • Building Your Own `class`",
+        title: "Inside `__init__` and `self`",
+        body: "You can invent your own classes (like `StampBot` or `Planet`)! Inside a class:\n• **`def __init__(self, ...):`** runs once when a new object is created.\n• **`self.color = color`** glues that value onto *this specific object*.\n• Every method inside the class takes **`self`** as its first parameter!",
+        code: `class StampBot:
+    def __init__(self, pen, color, size):
+        self.pen = pen
+        self.color = color
+        self.size = size
+
+    def draw_square(self, x, y):
+        self.pen.pencolor(self.color)
+        ...`,
+        callout: "Say it out loud: `self.size` means *\"MY OWN size stored inside THIS bot!\"*",
+      },
+      {
+        badge: "Step 3 • Interactive Blueprint Factory",
+        title: "Stamp Independent Objects Live!",
+        body: "Pick a color and size below and click **Spawn StampBot!** to watch one `class` blueprint stamp out totally different objects onto the canvas:",
+        widget: "blueprint-factory",
+        callout: "Once you put objects in a `list` (`for p in planets: p.draw(t)`), 3 lines of loop code can animate an entire solar system!",
       },
     ],
   },
@@ -375,7 +498,7 @@ angle = 360 / sides
 
 print("Turn angle:", angle)
 print("Perimeter:", sides * length)`,
-      tip: "Look at the dark **Console Output** box at the bottom-right after clicking Run to see your printed math!",
+      tip: "Why does `360 / 5` print `72.0` instead of `72`? Standard `/` division always produces a decimal (`float`) in Python—we'll learn whole-number `//` division in Unit 7!",
     },
   ],
   "u3-l2": [
@@ -482,22 +605,25 @@ angle = 360 / sides`,
   "u5-l3": [
     {
       title: "Generating Random Coordinates & Colors",
-      body: "After `import random`, you get two awesome tools:\n• `random.randint(-220, 220)` picks a random whole number in that range.\n• `random.choice(colors)` picks a random item from a list!",
-      code: `x = random.randint(-220, 220)
+      body: "After `import random`, you get two awesome tools:\n• `random.randint(-220, 220)` picks a random whole number in that range.\n• `random.choice(colors)` picks a random color from `colors = [\"gold\", ...]` (**Sneak Peek:** square brackets `[]` create a **list**—you'll master them in Unit 8!).",
+      code: `t.hideturtle()   # Hides the turtle arrow for a clean sky!
+x = random.randint(-220, 220)
 y = random.randint(-170, 170)
 t.goto(x, y)
 t.dot(random.randint(6, 16), random.choice(colors))`,
-      tip: "Call `turtle.bgcolor(\"navy\")` at the top so your random stars shine against a dark sky!",
+      tip: "Call `turtle.bgcolor(\"navy\")` at the top so your random stars shine against a dark sky, and `t.hideturtle()` to tuck the turtle away cleanly!",
     },
   ],
   "u5-l4": [
     {
       title: "Random Walks & Safety Fences",
-      body: "Pick a random heading (`random.choice([0, 90, 180, 270])`) every step! Use `t.distance(0, 0)` to measure how far the turtle wandered from center, and `t.towards(0, 0)` to point it straight back home if it crosses the fence.",
+      body: "Pick a random heading (`random.choice([0, 90, 180, 270])`) every step! Use:\n• `t.distance(0, 0)` — measures how far away from center the turtle wandered.\n• `t.towards(0, 0)` — returns the compass angle pointing straight back home.\n• `round(num, 1)` — rounds long decimals (like `42.4264...`) neatly to 1 decimal place (`42.4`)!",
       code: `if t.distance(0, 0) > 150:
     t.setheading(t.towards(0, 0))
-    t.forward(40)`,
-      tip: "Look at the console output—run it 3 times and compare how far from `(0, 0)` each random walk finishes!",
+    t.forward(40)
+
+print("Distance:", round(t.distance(0, 0), 1))`,
+      tip: "Run it 3 times and compare how far from `(0, 0)` each random walk finishes in the console!",
     },
   ],
   "u6-l1": [
@@ -515,14 +641,16 @@ t.dot(random.randint(6, 16), random.choice(colors))`,
   ],
   "u6-l2": [
     {
-      title: "Growing Both Left & Right Sub-Trees",
-      body: "Inside `draw_branch(length)`:\n1. Check the **base case**: `if length < 15: return`.\n2. Walk forward `length`, turn left `28°`, and call `draw_branch(length * 0.7)`.\n3. Turn right `56°` (`28 + 28`) and call `draw_branch(length * 0.7)` again for the right side.\n4. Turn left `28°` and walk `backward(length)` so the turtle returns cleanly to the fork!",
+      title: "Trace & Grow Both Sub-Trees",
+      body: "Follow the shrinking sizes (`80 → 56 → 39 → 27 → 19 → 13 STOP!`) inside `draw_branch(length)`:\n1. **Base case brake:** `if length < 15: return` stops tiny twigs.\n2. Grow forward `length`, turn `left(28)`, and call `draw_branch(length * 0.7)`.\n3. Turn `right(56)` (`28 + 28`) and call `draw_branch(length * 0.7)` again for the right side.\n4. Turn `left(28)` and walk `backward(length)` with `penup()` so colored leaves don't repaint the trunk!",
       code: `t.left(28)
 draw_branch(length * 0.7)
 t.right(56)
 draw_branch(length * 0.7)
 t.left(28)
-t.backward(length)`,
+t.penup()
+t.backward(length)
+t.pendown()`,
       tip: "Switch speed to **Fast** or **Instant** to watch the whole fractal canopy bloom!",
     },
   ],
@@ -547,6 +675,138 @@ t.backward(length)`,
 t.goto(0, -145)
 t.write("MY CREST", align="center", font=("Arial", 20, "bold"))`,
       tip: "Once you love your crest, copy the code into the **🎨 Sandbox** and click **📸 Save PNG** to keep a picture of it!",
+    },
+  ],
+  "u7-l1": [
+    {
+      title: "Building a 2D Grid With `//` and `%`",
+      body: "Imagine 12 seats lined up in 3 rows of 4. Seat `i` (`0..11`) belongs at:\n• `row = i // 4` (whole quotient: `0, 1, or 2`)\n• `col = i % 4` (remainder: `0, 1, 2, or 3`)\nUse `total += 1` each time to count tiles cleanly!",
+      code: `for i in range(12):
+    row = i // 4
+    col = i % 4
+    total += 1
+    t.goto(-110 + col * 70, 75 - row * 70)`,
+      tip: "Want the ⭐ Bonus Star? Try `row % 2 == 0` for alternating row colors, OR `print(\"2^5 =\", 2 ** 5)` using `**`!",
+    },
+  ],
+  "u7-l2": [
+    {
+      title: "Guarding Both Walls With `and` / `or`",
+      body: "To keep your turtle inside the `[-130..130] × [-90..90]` safe zone, bounce back whenever it crosses ANY of the 4 walls using `or`:",
+      code: `if x < -130 or x > 130 or y < -90 or y > 90:
+    t.dot(10, "red")
+    t.setheading(t.towards(0, 0))
+    t.forward(45)`,
+      tip: "Add an `else:` branch with `t.dot(8, \"teal\")` to see green/teal safe spots vs red wall bounces!",
+    },
+  ],
+  "u7-l3": [
+    {
+      title: "Cleaning Text & Formatting f-Strings",
+      body: "People type messy spaces or ALL CAPS in `input()`. Clean it up first, measure `len(clean)`, and format your greeting with an `f\"...\"` string!",
+      code: `clean = raw.strip().lower()
+width = max(160, len(clean) * 22 + 90)
+t.write(f"Hello, {clean}!", align="center", font=("Arial", 20, "bold"))`,
+      tip: "Check `clean[0]` (the very first letter!) with `if` to pick your favorite border color and fill your banner!",
+    },
+  ],
+  "u7-l4": [
+    {
+      title: "Writing Answer Machines With `return`",
+      body: "When a function uses **`return`**, it doesn't just print—it hands back an answer your main program can plug right into `t.right(...)` or `t.pencolor(...)`!",
+      code: `def turn_angle(sides):
+    return 360 / sides
+
+angle = turn_angle(6)   # angle is 60.0!
+print(f"Hexagon angle: {angle}")`,
+      tip: "Define BOTH `turn_angle(sides)` and `ring_color(step)` returning values, then loop through `[3, 4, 6]`!",
+    },
+  ],
+  "u8-l1": [
+    {
+      title: "The Color Train (`list`) Toolkit",
+      body: "Keep all your colors in one variable:\n• `colors.append(\"blue\")` adds to the end of the list.\n• `len(colors)` counts how many items are inside.\n• `colors[0]` is first, `colors[-1]` is last, and `colors[i % len(colors)]` loops round and round forever without crashing!",
+      code: `colors = ["red", "orange", "gold", "green"]
+colors.append("dodgerblue")
+t.pencolor(colors[i % len(colors)])`,
+      tip: "Make sure you have 4+ distinct colors drawn across at least 12 lines!",
+    },
+  ],
+  "u8-l2": [
+    {
+      title: "Unpacking `(x, y)` Tuples",
+      body: "Each star in `stars = [(-150, 70), (-60, 110), ...]` is a locked `(x, y)` tuple pair. A Python `for` loop can unpack BOTH coordinates automatically in one step:",
+      code: `for x, y in stars:
+    t.goto(x, y)
+    t.dot(14, "gold")`,
+      tip: "Because `stars[0]` is already `(x, y)`, `t.goto(stars[0])` jumps straight to the first star!",
+    },
+  ],
+  "u8-l3": [
+    {
+      title: "Safe Lookups With `if name in shapes:`",
+      body: "If `\"dragon\"` isn't in your `shapes` dictionary, writing `shapes[\"dragon\"]` crashes with `KeyError`! Check `if name in shapes:` first so unknown spells print a warning cleanly:",
+      code: `for name in orders:
+    if name in shapes:
+        sides = shapes[name]
+        # draw polygon with sides!
+    else:
+        print("Unknown spell:", name)`,
+      tip: "Remember to jump to a fresh x-position after each shape so your triangle, square, and hexagon don't stack on top of each other!",
+    },
+  ],
+  "u8-l4": [
+    {
+      title: "Tracking Unique Corners With `set()`",
+      body: "A `set()` ignores duplicate entries! Every time your turtle hops to `(x, y)`, figure out its quadrant (`\"Q1\"`..`\"Q4\"`), run `visited.add(zone)`, and stop the loop with `break` as soon as `len(visited) == 4`:",
+      code: `if zone not in visited:
+    t.dot(18, "gold")   # Brand-new discovery!
+else:
+    t.dot(10, "skyblue")
+visited.add(zone)
+if len(visited) == 4 or steps >= 80:
+    break`,
+      tip: "Keep a backup limit (`or steps >= 80`) alongside `len(visited) == 4`—just in case random hops skip axes!",
+    },
+  ],
+  "u9-l1": [
+    {
+      title: "One Blueprint, Two Turtles!",
+      body: "Calling `turtle.Turtle()` twice hatches two separate Turtle objects (`leo` and `maya`). Giving `leo.forward(80)` only moves `leo`—`maya` waits until you command `maya.forward(80)`!",
+      code: `leo = turtle.Turtle()
+maya = turtle.Turtle()
+leo.pencolor("dodgerblue")
+maya.pencolor("coral")`,
+      tip: "Notice the matching colored halo rings on the canvas when 2+ turtles are active!",
+    },
+  ],
+  "u9-l2": [
+    {
+      title: "Building `StampBot` Step-by-Step",
+      body: "1. Inside `def __init__(self, pen, color, size):`, glue inputs onto `self` (`self.pen = pen`, `self.color = color`, `self.size = size`).\n2. Inside `def draw_square(self, x, y):`, use `self.pen`, `self.color`, and `self.size`!\n3. Make `bot1` and `bot2` with different colors & sizes.",
+      code: `bot1 = StampBot(t, "crimson", 70)
+bot2 = StampBot(t, "dodgerblue", 110)
+bot1.draw_square(-140, 40)
+bot2.draw_square(20, 60)`,
+      tip: "Every method inside `class StampBot:` starts with `self` as its first parameter!",
+    },
+  ],
+  "u9-l3": [
+    {
+      title: "Animating a `list` of Objects",
+      body: "Store all your `Planet(...)` instances inside a `planets = [...]` list, then draw them all in just 2 lines!",
+      code: `for p in planets:
+    p.draw(t)`,
+      tip: "Inside `draw(self, pen)`, use `pen.dot(self.radius * 2, self.color)` and `pen.write(self.name, align=\"center\")` for a labeled galaxy!",
+    },
+  ],
+  "u9-l4": [
+    {
+      title: "Design Like a Python Architect",
+      body: "Combine your entire toolkit in one creation:\n1. A custom `class` (`__init__` + `self` + method)\n2. A `list` or `dict` holding 3+ objects across 3+ quadrants\n3. A `for` loop + `if` check (for special colors or dot bursts)\n4. A signed title with `t.write(...)` or a 2nd turtle for the ⭐ Bonus Star!",
+      code: `for fw in show:
+    fw.launch(t)`,
+      tip: "Click into **🎨 Free-Draw Sandbox** anytime after finishing to export your OOP art as a PNG!",
     },
   ],
 };
@@ -609,10 +869,41 @@ export const CHEAT_SHEET_SECTIONS = [
     id: "fixes",
     label: "🐛 Quick Bug Fixes",
     items: [
-      { code: "for i in range(4):", desc: "Missing colon `:` — every `for`, `if`, or `def` line MUST end with `:`!" },
-      { code: "    t.forward(100)", desc: "Indentation — lines inside a `for` loop need 4 spaces (press `Tab`)" },
+      { code: "for i in range(4):", desc: "Missing colon `:` — every `for`, `if`, `def`, or `class` line MUST end with `:`!" },
+      { code: "    t.forward(100)", desc: "Indentation — lines inside a block need 4 spaces (press `Tab`)" },
       { code: 't.pencolor("red")', desc: "Quotes — color names and words always need `\"...\"` or `'...'`" },
       { code: "t.forward(100)", desc: "Don't forget `t.` in front AND parentheses `(...)` around the number!" },
+      { code: 'if word in my_dict:', desc: "Guard dictionary lookups with `in` before reading `my_dict[word]` to avoid `KeyError`!" },
+    ],
+  },
+  {
+    id: "operators",
+    label: "⚙️ Operators & Text",
+    items: [
+      { code: "row = i // 4\ncol = i % 4", desc: "`//` gives the whole-number quotient; `%` gives the division remainder" },
+      { code: "power = 2 ** 5\ncount += 1", desc: "`**` calculates powers/exponents (`32`); `+=` adds onto a variable" },
+      { code: "if x < -130 or x > 130:", desc: "Combine Yes/No checks using `and`, `or`, and `not` (`True` / `False`)" },
+      { code: 'clean = text.strip().lower()\nprint(f"Hi {clean}! ({len(clean)})")', desc: "Tidy spaces/caps, count letters with `len()`, and plug into f-strings `f\"...\"`" },
+      { code: "def turn_angle(sides):\n    return 360 / sides", desc: "`return` hands an answer back from a function so your code can reuse it" },
+    ],
+  },
+  {
+    id: "containers",
+    label: "📦 Lists, Dicts & Sets",
+    items: [
+      { code: 'colors = ["red", "gold", "teal"]\ncolors.append("blue")\nt.pencolor(colors[i % len(colors)])', desc: "`list`: ordered items `[0]` first, `[-1]` last, `.append()` adds to end" },
+      { code: 'stars = [(-100, 80), (120, -40)]\nfor x, y in stars:\n    t.goto(x, y)', desc: "`tuple`: locked `(x, y)` pairs that unpack cleanly in a `for` loop" },
+      { code: 'shapes = {"triangle": 3, "square": 4}\nif name in shapes:\n    sides = shapes[name]', desc: "`dict`: spellbook lookup pairing keys (`\"square\"`) to values (`4`)" },
+      { code: 'seen = set()\nseen.add("Q1")\nif len(seen) == 4:\n    break', desc: "`set`: unique bag (blocks duplicates!) paired with `while True:` + `break`" },
+    ],
+  },
+  {
+    id: "oop",
+    label: "🤖 Classes & Objects",
+    items: [
+      { code: "leo = turtle.Turtle()\nmaya = turtle.Turtle()", desc: "Spawn multiple independent Turtle objects from one blueprint" },
+      { code: "class StampBot:\n    def __init__(self, pen, color, size):\n        self.pen = pen\n        self.color = color\n        self.size = size\n\n    def draw(self, x, y):\n        self.pen.pencolor(self.color)", desc: "Define your own `class` blueprint with `__init__`, `self` attributes, and methods" },
+      { code: "for bot in squad:\n    bot.draw(t)", desc: "Store custom objects in a `list` and run `.method()` on every one!" },
     ],
   },
 ];

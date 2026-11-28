@@ -90,9 +90,9 @@ export function renderSkillMap(container, state, { onOpenNode, onOpenSandbox }) 
       ${unitsHtml}
 
       <div class="coming-soon-banner">
-        <h3>🏆 Complete 6-Unit Python + Turtle Adventure</h3>
+        <h3>🏆 Complete ${UNITS.length}-Unit Python + Turtle Adventure</h3>
         <p style="margin:0;">
-          Master angles, loops, variables, functions, logic, recursion, and mini-games—then build your own creations anytime in the Free-Draw Sandbox!
+          Master angles, loops, variables, functions, logic, data containers, classes &amp; objects—then build your own creations anytime in the Free-Draw Sandbox!
         </p>
       </div>
     </div>

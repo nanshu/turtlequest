@@ -59,6 +59,11 @@ const PYTHON_BUILTINS = [
   "int",
   "float",
   "str",
+  "bool",
+  "list",
+  "tuple",
+  "dict",
+  "set",
   "len",
   "abs",
   "round",
@@ -70,14 +75,36 @@ const PYTHON_BUILTINS = [
   "None",
   "for",
   "while",
+  "break",
   "if",
   "else",
   "elif",
   "def",
+  "return",
+  "class",
+  "self",
+  "and",
+  "or",
+  "not",
+  "in",
   "import",
   "turtle",
   "random",
   "math",
+];
+
+const COMMON_METHODS = [
+  ...TURTLE_METHODS,
+  "append",
+  "add",
+  "lower",
+  "upper",
+  "strip",
+  "split",
+  "keys",
+  "values",
+  "items",
+  "get",
 ];
 
 export function levenshtein(a, b) {
@@ -199,15 +226,15 @@ export function translatePythonError(rawTraceback, code = "") {
 
     if (
       lastLine.includes("expected ':'") ||
-      (/^\s*(for|while|if|elif|else|def)\b/.test(srcLine) &&
+      (/^\s*(for|while|if|elif|else|def|class)\b/.test(srcLine) &&
         !srcLine.replace(/#.*$/, "").trim().endsWith(":"))
     ) {
       return {
         title: `Missing Colon \`:\`${line ? ` on Line ${line}` : ""}`,
-        explanation: `Lines starting with \`for\`, \`if\`, or \`def\` always need a colon \`:\` at the end so Python knows a code block starts next.`,
+        explanation: `Lines starting with \`for\`, \`if\`, \`def\`, or \`class\` always need a colon \`:\` at the end so Python knows an indented block starts next.`,
         tip: srcLine
           ? `Try adding \`:\` at the end of: \`${srcLine}\``
-          : "Add `:` at the end of your `for`, `if`, or `def` line!",
+          : "Add `:` at the end of your `for`, `if`, `def`, or `class` line!",
         line,
         rawTraceback: text,
       };
@@ -279,13 +306,64 @@ export function translatePythonError(rawTraceback, code = "") {
   if (lastLine.startsWith("AttributeError")) {
     const m = lastLine.match(/has no attribute ['"]([^'"]+)['"]/);
     const badAttr = m ? m[1] : "";
-    const suggestion = findClosestMatch(badAttr, TURTLE_METHODS);
+    const typeMatch = lastLine.match(/(?:['"]([^'"]+)['"] object|module ['"]([^'"]+)['"]) has no attribute/);
+    const objType = (typeMatch && (typeMatch[1] || typeMatch[2])) || "object";
+    const isTurtleObj = objType === "Turtle" || objType === "turtle" || objType === "Screen";
+
+    if (isTurtleObj) {
+      const suggestion = findClosestMatch(badAttr, TURTLE_METHODS);
+      return {
+        title: `Turtle Doesn't Know \`.${badAttr}()\`${line ? ` on Line ${line}` : ""}`,
+        explanation: `Your turtle tried to run \`.${badAttr}()\`, which isn't a turtle command.`,
+        tip: suggestion
+          ? `Did you mean \`t.${suggestion}(...)\`?`
+          : "Check the spelling of your turtle command (like `t.forward`, `t.right`, `t.penup`, `t.pencolor`).",
+        line,
+        rawTraceback: text,
+      };
+    }
+
+    const suggestion = findClosestMatch(badAttr, COMMON_METHODS);
     return {
-      title: `Turtle Doesn't Know \`.${badAttr}()\`${line ? ` on Line ${line}` : ""}`,
-      explanation: `Your turtle tried to run \`.${badAttr}()\`, which isn't a turtle command.`,
+      title: `\`${objType}\` Doesn't Have \`.${badAttr}\`${line ? ` on Line ${line}` : ""}`,
+      explanation: `The \`${objType}\` object doesn't have an attribute or method named \`.${badAttr}\`.`,
       tip: suggestion
-        ? `Did you mean \`t.${suggestion}(...)\`?`
-        : "Check the spelling of your turtle command (like `t.forward`, `t.right`, `t.penup`, `t.pencolor`).",
+        ? `Did you mean \`.${suggestion}(...)\`? (If it's your own \`class\`, check \`self.${badAttr} = ...\` inside \`__init__\` and method spelling!)`
+        : `Check your spelling—if this is your own \`class\`, make sure \`self.${badAttr}\` is saved in \`__init__(self, ...)\` or defined as a method inside the class!`,
+      line,
+      rawTraceback: text,
+    };
+  }
+
+  if (lastLine.startsWith("IndexError")) {
+    return {
+      title: `List Index Out of Range${line ? ` on Line ${line}` : ""}`,
+      explanation:
+        "You asked for an item position that doesn't exist in that list or word! Remember Python counts from `0`.",
+      tip: "A list with 4 items has positions `0, 1, 2, 3` (or `-1` for the last item). Check `len(my_list)` or try `i % len(colors)` to wrap safely!",
+      line,
+      rawTraceback: text,
+    };
+  }
+
+  if (lastLine.startsWith("KeyError")) {
+    const keyMatch = lastLine.match(/^KeyError:\s*(.+)$/);
+    const missingKey = keyMatch ? keyMatch[1].trim() : "key";
+    return {
+      title: `Missing Dictionary Key \`${missingKey}\`${line ? ` on Line ${line}` : ""}`,
+      explanation: `Python looked inside your dictionary (\`dict\`), but the key \`${missingKey}\` wasn't found!`,
+      tip: "Check spelling/lowercase (use `.strip().lower()` on user input!), or guard lookups safely with `if word in my_dict:` before reading `my_dict[word]`.",
+      line,
+      rawTraceback: text,
+    };
+  }
+
+  if (lastLine.startsWith("UnboundLocalError")) {
+    return {
+      title: `Variable Read Before Set Inside Function${line ? ` on Line ${line}` : ""}`,
+      explanation:
+        "Inside a `def` function, you tried to update an outside variable before giving it a local value inside the function.",
+      tip: "Pass values into your function as parameters inside `(...)` and send answers back with `return`!",
       line,
       rawTraceback: text,
     };

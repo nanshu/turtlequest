@@ -284,6 +284,20 @@ for i in range(18):
         correctIndex: 1,
         explanation: "Unlike `range(1, 6)`, `random.randint(1, 6)` includes BOTH endpoints (`1` and `6`)!",
       },
+      {
+        prompt: "Spot the bug! Why does Python give a `SyntaxError` on this `if` line?",
+        code: `sides = 4
+if sides = 4:
+    print("Square!")`,
+        options: [
+          "Comparisons inside `if` MUST use two equals signs `==` (`if sides == 4:`), not one `=`",
+          "4 needs quotes around it",
+          "You cannot use `print()` inside `if`",
+        ],
+        correctIndex: 0,
+        explanation:
+          "One `=` stores a value (`sides = 4`); two `==` asks a Yes/No question (`if sides == 4:`)!",
+      },
     ],
   },
   {

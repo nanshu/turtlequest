@@ -118,7 +118,7 @@ for i in range(6):
       "Use a `for` loop",
       "Draw a closed regular hexagon (6 equal sides)",
     ],
-    bonusGoal: "Bonus Star: Fill your hexagon with t.begin_fill() and t.end_fill()!",
+    bonusGoal: "Bonus Star: Fill your hexagon with `t.begin_fill()` and `t.end_fill()`!",
     hints: [
       "In Python, you can even write `t.right(360 / 6)` right inside the loop—let Python do the division!",
       "Make sure `t.begin_fill()` goes BEFORE the `for` loop and `t.end_fill()` goes AFTER (unindented!).",
@@ -179,7 +179,7 @@ for i in range(36):
     showGridDefault: false,
     goals: [
       "Use a `for` loop with 24+ steps",
-      "Turn 360 / steps to close into a smooth circle-like loop",
+      "Turn `360 / steps` to close into a smooth circle-like loop",
     ],
     bonusGoal: "Bonus Star: Fill your circle or use a thick pen (`pensize >= 4`)",
     hints: [
@@ -254,6 +254,20 @@ t.right(90)`,
         options: ["180° (half turn)", "360° (one full octagon loop)", "720° (two full spins)"],
         correctIndex: 1,
         explanation: "8 × 45° = 360°—a regular octagon!",
+      },
+      {
+        prompt: "Spot the bug! Why does Python show a `SyntaxError` on line 1?",
+        code: `for i in range(6)
+    t.forward(75)
+    t.right(60)`,
+        options: [
+          "The `for` line is missing a colon `:` at the end (`for i in range(6):`)",
+          "You cannot use the letter `i` inside `for`",
+          "75 is too small for a hexagon",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Every Python block header (`for`, `if`, `def`, `while`) MUST end with a colon `:` before the indented lines!",
       },
     ],
   },

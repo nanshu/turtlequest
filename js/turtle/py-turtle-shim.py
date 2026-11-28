@@ -71,6 +71,11 @@ _NAMED_COLORS = {
     "lightblue": "#7dd3fc",
     "lightgreen": "#86efac",
     "silver": "#cbd5e1",
+    "dodgerblue": "#1e90ff",
+    "deepskyblue": "#00bfff",
+    "crimson": "#dc2626",
+    "amber": "#f59e0b",
+    "rose": "#f43f5e",
 }
 
 _state = {
@@ -881,6 +886,19 @@ def _export_state():
         first_key = next(iter(_state["turtles"]))
         active = _state["turtles"][first_key]
 
+    turtles_map = {}
+    for tid, t in _state["turtles"].items():
+        turtles_map[tid] = {
+            "x": round(t._x, 4),
+            "y": round(t._y, 4),
+            "heading": round(t._heading, 4),
+            "penDown": t._pen_down,
+            "penColor": t._pen_color,
+            "fillColor": t._fill_color,
+            "penSize": t._pen_size,
+            "visible": t._visible,
+        }
+
     final_state = {
         "x": round(active._x, 4) if active else 0.0,
         "y": round(active._y, 4) if active else 0.0,
@@ -895,4 +913,6 @@ def _export_state():
         "segments": list(_state["segments"]),
         "bgcolor": _state["bgcolor"],
         "finalState": final_state,
+        "turtles": turtles_map,
+        "turtleCount": len(_state["turtles"]),
     }

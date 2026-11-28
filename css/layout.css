@@ -252,6 +252,15 @@
 .unit-banner.theme-coral {
   background: linear-gradient(135deg, #ff4b4b, #dc2626);
 }
+.unit-banner.theme-indigo {
+  background: linear-gradient(135deg, #6366f1, #4338ca);
+}
+.unit-banner.theme-amber {
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+.unit-banner.theme-rose {
+  background: linear-gradient(135deg, #f43f5e, #be123c);
+}
 
 .unit-eyebrow {
   font-size: 0.76rem;
@@ -373,6 +382,21 @@
   background: var(--coral);
   color: #ffffff;
   box-shadow: 0 7px 0 var(--coral-dark);
+}
+.node-btn.unit-indigo {
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 7px 0 #4338ca;
+}
+.node-btn.unit-amber {
+  background: #f59e0b;
+  color: #ffffff;
+  box-shadow: 0 7px 0 #b45309;
+}
+.node-btn.unit-rose {
+  background: #f43f5e;
+  color: #ffffff;
+  box-shadow: 0 7px 0 #be123c;
 }
 
 .node-btn.completed {

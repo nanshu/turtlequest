@@ -149,19 +149,23 @@ t.pensize(3)
 t.pencolor("brown")
 
 def draw_branch(length):
+    # Base case: emergency brake so branches stop shrinking!
     if length < 15:
-        return  # Base case: stop when branches get tiny!
+        return
 
     t.forward(length)
     t.left(28)
-    draw_branch(length * 0.7)  # Left sub-tree!
+    draw_branch(length * 0.7)  # Step 1: Left sub-tree!
 
     t.right(56)
-    # Now call draw_branch(length * 0.7) for the RIGHT sub-tree!
+    # Step 2: Now call draw_branch(length * 0.7) for the RIGHT sub-tree!
     
 
     t.left(28)
+    # Step 3: Lift pen when walking back to the fork so color tips won't paint over the trunk!
+    t.penup()
     t.backward(length)
+    t.pendown()
 
 t.penup()
 t.goto(0, -150)
@@ -179,8 +183,8 @@ draw_branch(80)
     bonusGoal: "Bonus Star: Paint green leaf tips on tiny branches (2+ colors on your tree)!",
     hints: [
       "Right under `t.right(56)`, add `draw_branch(length * 0.7)` (indented 4 spaces inside `draw_branch`)!",
-      "Try switching speed to **Fast** or **Instant** to see the full fractal tree bloom.",
-      "For leafy green tips (without repainting the trunk!), add right before `t.forward(length)`:\n`t.pencolor(\"green\" if length < 28 else \"brown\")`\nand lift the pen when walking back:\n`t.penup(); t.backward(length); t.pendown()`",
+      "Try switching speed to **Fast** or **Instant** to see the full fractal tree bloom (`80 → 56 → 39 → 27 → 19 → 13 stop!`).",
+      "For leafy green tips, add right before `t.forward(length)`:\n`t.pencolor(\"green\" if length < 28 else \"brown\")`",
     ],
     check(runResult, h) {
       const { astInfo, turtleData } = runResult;
@@ -346,6 +350,20 @@ t.pensize(4)
         ],
         correctIndex: 1,
         explanation: "A `while` loop keeps running as long as its condition is `True`, and stops the moment it becomes `False`!",
+      },
+      {
+        prompt: "Spot the bug! What happens if someone runs this recursive function?",
+        code: `def draw_branch(length):
+    t.forward(length)
+    draw_branch(length * 0.7)`,
+        options: [
+          "It hits infinite recursion (`RecursionError`) because it has NO `if` base case to stop!",
+          "It draws a hexagon automatically",
+          "It skips calling `t.forward(length)`",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Without a base case like `if length < 15: return`, the function keeps calling itself forever with tinier and tinier numbers!",
       },
     ],
   },

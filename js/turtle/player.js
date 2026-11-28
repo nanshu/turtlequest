@@ -252,6 +252,25 @@ export class TurtlePlayer {
 
   _commitCommand(cmd) {
     if (!cmd) return;
+
+    if (cmd.cmd === "bgcolor") {
+      this.bgcolor = cmd.color;
+      return;
+    }
+    if (cmd.cmd === "clear" && cmd.id === "all") {
+      this.drawables = [];
+      return;
+    }
+    if (cmd.cmd === "reset_screen") {
+      this.drawables = [];
+      this.bgcolor = "#ffffff";
+      for (const tid of this.turtles.keys()) {
+        this.turtles.set(tid, this._defaultTurtle(tid));
+      }
+      this.activeTurtleId = this.turtles.keys().next().value || "t1";
+      return;
+    }
+
     const t = this._getTurtle(cmd.id);
 
     switch (cmd.cmd) {
@@ -266,6 +285,7 @@ export class TurtlePlayer {
           fillColor: cmd.fillColor ?? "#1cb0f6",
           penSize: cmd.penSize ?? 3,
           visible: cmd.visible ?? true,
+          fillStartIndex: null,
         });
         this.activeTurtleId = cmd.id;
         break;
@@ -355,26 +375,12 @@ export class TurtlePlayer {
       case "visibility":
         t.visible = cmd.visible;
         break;
-      case "bgcolor":
-        this.bgcolor = cmd.color;
-        break;
       case "clear":
-        if (cmd.id === "all") {
-          this.drawables = [];
-        } else {
-          this.drawables = this.drawables.filter((d) => d.turtleId !== cmd.id);
-        }
+        this.drawables = this.drawables.filter((d) => d.turtleId !== cmd.id);
         break;
       case "reset":
         this.drawables = this.drawables.filter((d) => d.turtleId !== cmd.id);
         this.turtles.set(cmd.id, this._defaultTurtle(cmd.id));
-        break;
-      case "reset_screen":
-        this.drawables = [];
-        this.bgcolor = "#ffffff";
-        for (const tid of this.turtles.keys()) {
-          this.turtles.set(tid, this._defaultTurtle(tid));
-        }
         break;
       default:
         break;

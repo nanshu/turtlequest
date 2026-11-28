@@ -55,7 +55,7 @@ t.forward(100)
       "Make a 90° corner turn between them",
       "Use a color other than default black",
     ],
-    bonusGoal: "Bonus Star: Make your line chunky with t.pensize(5) (4 or thicker)",
+    bonusGoal: "Bonus Star: Make your line chunky with `t.pensize(5)` (4 or thicker)",
     hints: [
       "After `t.forward(100)`, try `t.right(90)` or `t.left(90)` and then another `t.forward(100)`.",
       "Don't forget parentheses around the number, like `t.right(90)`!",
@@ -210,7 +210,7 @@ t.right(120)
       "Draw 3 equal sides (60+ steps each)",
       "Close into an equilateral triangle using 120° turns",
     ],
-    bonusGoal: "Bonus Star: Fill your triangle with color using t.begin_fill() and t.end_fill()",
+    bonusGoal: "Bonus Star: Fill your triangle with color using `t.begin_fill()` and `t.end_fill()`",
     hints: [
       "Inside angles are 60°, so the turtle's outside turn is `180 - 60 = 120` degrees.",
       "Do `t.forward(120)` and `t.right(120)` (or `t.left(120)`) 3 times!",
@@ -260,7 +260,7 @@ t.right(120)
     type: "quiz",
     icon: "⚡",
     title: "Quick Check: Angle Ninja",
-    subtitle: "3 fast brain puzzles (no typing!)",
+    subtitle: "4 fast brain puzzles (no typing!)",
     xp: 20,
     questions: [
       {
@@ -295,6 +295,20 @@ t.forward 100`,
         correctIndex: 1,
         explanation:
           "Every turtle action needs parentheses `(...)` around its input, like `t.forward(100)`!",
+      },
+      {
+        prompt: "Spot the bug! Why does Python say `NameError: name 'blue' is not defined` here?",
+        code: `import turtle
+t = turtle.Turtle()
+t.pencolor(blue)`,
+        options: [
+          "Color names are text and MUST wear quotes: `t.pencolor(\"blue\")`",
+          "Python only knows the color red",
+          "You have to write `t.color = blue` instead",
+        ],
+        correctIndex: 0,
+        explanation:
+          "Numbers stand alone (`100`), but words and color names ALWAYS need quotes (`\"blue\"`) so Python knows they are text!",
       },
     ],
   },
@@ -335,7 +349,7 @@ t.pendown()
     blueprint: null,
     showGridDefault: false,
     goals: [
-      "Use t.penup() and t.pendown() to jump cleanly",
+      "Use `t.penup()` and `t.pendown()` to jump cleanly",
       "Draw at least 2 separate closed shapes",
     ],
     bonusGoal: "Bonus Star: Give your two shapes 2 different colors!",

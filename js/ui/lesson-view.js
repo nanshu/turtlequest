@@ -46,7 +46,7 @@ export function renderLessonView(
     <div class="workspace-header">
       <div class="workspace-title-group">
         <button id="ws-back-btn" class="btn btn-ghost btn-sm" type="button">← Skill Path</button>
-        <h2>${lesson.icon} ${escapeHtml(lesson.title)}</h2>
+        <h2>${lesson.icon} ${formatInlineText(lesson.title)}</h2>
         <span class="xp-badge">⚡ +${lesson.xp} XP${lesson.bonusXp ? ` (+${lesson.bonusXp} Bonus)` : ""}</span>
       </div>
     </div>
