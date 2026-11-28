@@ -29,7 +29,7 @@ function syncDir(relDir) {
   }
 }
 
-for (const file of ["index.html", "_headers"]) {
+for (const file of ["index.html", "404.html", "_headers"]) {
   syncFile(file);
 }
 for (const dir of ["css", "js"]) {

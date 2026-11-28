@@ -8,11 +8,11 @@
   },
   "scripts": {
     "build:assets": "node scripts/build-assets.mjs",
-    "dev": "wrangler dev",
+    "dev": "node scripts/build-assets.mjs && wrangler pages dev",
     "db:migrate:local": "wrangler d1 migrations apply turtlequest-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply turtlequest-db --remote",
     "reset-pin": "node scripts/reset-pin.mjs",
-    "deploy": "wrangler deploy",
+    "deploy": "node scripts/build-assets.mjs && wrangler pages deploy",
     "test": "node tests/run-all.mjs"
   },
   "devDependencies": {

@@ -4,6 +4,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { ALL_NODES, ORDERED_NODE_IDS, UNITS } from "../js/curriculum/index.js";
+import { onRequest as pagesApiOnRequest } from "../functions/api/[[path]].js";
 import { isLessonUnlocked, recordLessonCompletion } from "../js/state/progress.js";
 import {
   clearStoredState,
@@ -534,11 +535,19 @@ await runTest("Import hardening: rejects future lastActiveDate freeze, preserves
   assert.ok(!Number.isNaN(Date.parse(merged.data.state.sandboxGallery[0].savedAt)));
 });
 
-await runTest("Worker default fetch routing & scripts/reset-pin.mjs CLI parsing", async () => {
+await runTest("Worker & Pages Function entrypoints & scripts/reset-pin.mjs CLI parsing", async () => {
   const db = new SqliteD1Database(schemaSql);
   const env = { DB: db };
   const res = await workerDefault.fetch(new Request("https://turtlequest.example/api/auth/me"), env);
   assert.equal(res.status, 200);
+
+  const pagesRes = await pagesApiOnRequest({
+    request: new Request("https://turtlequest.pages.dev/api/auth/me"),
+    env,
+  });
+  assert.equal(pagesRes.status, 200);
+  const pagesData = await pagesRes.json();
+  assert.equal(pagesData.cloudEnabled, true);
 
   // CLI argument parsing tests
   assert.equal(parseResetPinArgs(["--prod", "maya", "1234"]).ok, false);

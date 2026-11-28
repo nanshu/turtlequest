@@ -1,6 +1,6 @@
 # TurtleQuest 🐢
 
-A local-first, zero-build, Duolingo-style Python + Turtle learning web app built for 5th-grade math and logic learners—with optional multi-user accounts backed by **Cloudflare Workers + D1 (SQLite)**.
+A local-first, zero-build, Duolingo-style Python + Turtle learning web app built for 5th-grade math and logic learners—with optional multi-user accounts backed by **Cloudflare Pages Functions + D1 (SQLite)**.
 
 ## Features
 - **Real In-Browser Python:** Runs client-side via [Pyodide](https://pyodide.org/) inside a Web Worker with `print()` streaming, interactive `input()` modals, and infinite-loop protection.
@@ -12,9 +12,9 @@ A local-first, zero-build, Duolingo-style Python + Turtle learning web app built
 
 ---
 
-## Option 1: Multi-User Cloud Setup (Cloudflare Workers + D1)
+## Option 1: Multi-User Cloud Setup (Cloudflare Pages + D1)
 
-This mode gives you **multi-user accounts with a real D1 SQLite database**, zero 7-day pausing, and production `COOP/COEP` (`SharedArrayBuffer`) headers via [`_headers`](./_headers).
+This mode gives you **multi-user accounts with a real D1 SQLite database**, clean `*.pages.dev` & custom subdomain hosting, zero 7-day pausing, and production `COOP/COEP` (`SharedArrayBuffer`) headers via [`_headers`](./_headers).
 
 ### Local Development
 ```bash
@@ -22,21 +22,22 @@ npm install
 npm run db:migrate:local
 npm run dev
 ```
-Then open **http://127.0.0.1:8787** in your browser.
+Then open **http://127.0.0.1:8788** in your browser.
 
 ### Optional Family / Class Invite Code
 To restrict who can register new accounts, set a `SIGNUP_CODE` secret:
 ```bash
-npx wrangler secret put SIGNUP_CODE
+npx wrangler pages secret put SIGNUP_CODE --project-name=turtlequest
 ```
 *(In local dev, you can add a gitignored `.dev.vars` file with `SIGNUP_CODE=your-code`.)*
 
-### Deploy Live to Cloudflare Workers (Free Tier)
+### Deploy Live to Cloudflare Pages (Free Tier)
 ```bash
 npx wrangler login
 npx wrangler d1 create turtlequest-db
 # Copy the printed database_id into wrangler.jsonc
 npm run db:migrate:remote
+npx wrangler pages project create turtlequest --production-branch=main
 npm run deploy
 ```
 
