@@ -5,6 +5,14 @@ import { escapeHtml, formatInlineText } from "./format.js";
 
 const activeModalCleanups = new Set();
 
+export function registerModalCleanup(fn) {
+  if (typeof fn === "function") activeModalCleanups.add(fn);
+}
+
+export function unregisterModalCleanup(fn) {
+  activeModalCleanups.delete(fn);
+}
+
 function getModalRoot() {
   return document.getElementById("modal-root");
 }
@@ -245,19 +253,60 @@ export function showShopModal({ state, onBuyOrEquip, onToggleRainbow }) {
         </div>
 
         <div class="shop-grid">${cardsHtml}</div>
+        <div id="shop-msg" style="margin-top:10px; font-weight:800; font-size:0.86rem; color:var(--coral-dark);"></div>
       </div>
     `;
 
+    const msgEl = wrap.querySelector("#shop-msg");
+    const rainbowBtn = wrap.querySelector("#shop-rainbow-btn");
+    const actionBtns = wrap.querySelectorAll(".shop-action-btn");
+    let shopBusy = false;
+
     wrap.querySelector("#shop-close-btn").addEventListener("click", closeShop);
-    wrap.querySelector("#shop-rainbow-btn").addEventListener("click", () => {
-      const updated = onToggleRainbow();
-      renderContent(updated);
+    rainbowBtn.addEventListener("click", async () => {
+      if (shopBusy) return;
+      shopBusy = true;
+      rainbowBtn.disabled = true;
+      try {
+        const updated = await onToggleRainbow();
+        if (updated) {
+          renderContent(updated);
+          return;
+        }
+        msgEl.textContent = "Could not update rainbow trail.";
+      } catch (err) {
+        msgEl.textContent = err?.message || "Could not update rainbow trail.";
+      } finally {
+        shopBusy = false;
+        if (rainbowBtn.isConnected) rainbowBtn.disabled = false;
+      }
     });
-    wrap.querySelectorAll(".shop-action-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const res = onBuyOrEquip(btn.dataset.skin);
-        if (res && res.state) {
-          renderContent(res.state);
+    actionBtns.forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (shopBusy) return;
+        shopBusy = true;
+        actionBtns.forEach((b) => {
+          b.disabled = true;
+        });
+        try {
+          const res = await onBuyOrEquip(btn.dataset.skin);
+          if (res && res.state) {
+            renderContent(res.state);
+            if (!res.ok && res.message) {
+              const newMsg = wrap.querySelector("#shop-msg");
+              if (newMsg) newMsg.textContent = res.message;
+            }
+            return;
+          }
+          renderContent(currentState);
+          const newMsg = wrap.querySelector("#shop-msg");
+          if (newMsg) newMsg.textContent = res?.message || "Could not complete shop update.";
+        } catch (err) {
+          renderContent(currentState);
+          const newMsg = wrap.querySelector("#shop-msg");
+          if (newMsg) newMsg.textContent = err?.message || "Could not complete shop update.";
+        } finally {
+          shopBusy = false;
         }
       });
     });
@@ -281,11 +330,15 @@ export function showShopModal({ state, onBuyOrEquip, onToggleRainbow }) {
   root.appendChild(wrap);
 }
 
-export function showBackupModal({ state, onImportState }) {
+export function showBackupModal({ state, isCloudAccount = false, username = "", onImportState }) {
   const root = getModalRoot();
   closeAllModals();
 
   const jsonStr = exportStateJSON(state);
+  const introText = isCloudAccount
+    ? `Your progress syncs automatically to <strong>@${escapeHtml(username)}</strong>. You can still download a JSON backup anytime—restoring a save file replaces your cloud progress with that backup.`
+    : `Your progress saves automatically in this browser. Download a JSON backup anytime to move to another computer!`;
+
   const wrap = document.createElement("div");
   wrap.className = "modal-backdrop";
   wrap.innerHTML = `
@@ -295,7 +348,7 @@ export function showBackupModal({ state, onImportState }) {
         <button id="backup-close-btn" class="btn btn-ghost btn-sm" type="button">Close</button>
       </div>
       <p style="color:var(--text-muted); font-size:0.9rem; margin-top:0;">
-        Your progress saves automatically in this browser. Download a JSON backup anytime to move to another computer!
+        ${introText}
       </p>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
@@ -356,27 +409,58 @@ export function showBackupModal({ state, onImportState }) {
     showStatus(true, "Backup file downloaded!");
   });
 
-  wrap.querySelector("#backup-file-input").addEventListener("change", async (e) => {
+  const fileInput = wrap.querySelector("#backup-file-input");
+  const pasteBtn = wrap.querySelector("#backup-paste-import");
+  let backupBusy = false;
+
+  const setBackupControlsDisabled = (disabled) => {
+    fileInput.disabled = disabled;
+    pasteBtn.disabled = disabled;
+  };
+
+  fileInput.addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    const res = onImportState(text);
-    if (res.ok) {
-      showStatus(true, "Progress restored! Updating screen...");
-      setTimeout(closeBackup, 700);
-    } else {
-      showStatus(false, res.error || "Could not load that file.");
+    e.target.value = "";
+    if (!file || backupBusy) return;
+    backupBusy = true;
+    setBackupControlsDisabled(true);
+    showStatus(true, "Restoring save file...");
+    try {
+      const text = await file.text();
+      const res = await onImportState(text);
+      if (res && res.ok) {
+        showStatus(true, "Progress restored! Updating screen...");
+        setTimeout(closeBackup, 700);
+        return;
+      }
+      showStatus(false, res?.error || "Could not load that file.");
+    } catch (err) {
+      showStatus(false, err?.message || "Could not load that file.");
+    } finally {
+      backupBusy = false;
+      if (wrap.isConnected) setBackupControlsDisabled(false);
     }
   });
 
-  wrap.querySelector("#backup-paste-import").addEventListener("click", () => {
+  pasteBtn.addEventListener("click", async () => {
+    if (backupBusy) return;
     const text = wrap.querySelector("#backup-json-box").value;
-    const res = onImportState(text);
-    if (res.ok) {
-      showStatus(true, "Progress restored!");
-      setTimeout(closeBackup, 700);
-    } else {
-      showStatus(false, res.error || "Invalid JSON save text.");
+    backupBusy = true;
+    setBackupControlsDisabled(true);
+    showStatus(true, "Restoring progress...");
+    try {
+      const res = await onImportState(text);
+      if (res && res.ok) {
+        showStatus(true, "Progress restored!");
+        setTimeout(closeBackup, 700);
+        return;
+      }
+      showStatus(false, res?.error || "Invalid JSON save text.");
+    } catch (err) {
+      showStatus(false, err?.message || "Could not restore save.");
+    } finally {
+      backupBusy = false;
+      if (wrap.isConnected) setBackupControlsDisabled(false);
     }
   });
 }

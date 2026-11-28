@@ -112,8 +112,39 @@ export function renderQuizView(container, node, { onBack, onComplete }) {
         render();
       });
     } else {
-      container.querySelector("#quiz-next-btn").addEventListener("click", () => {
+      const nextBtn = container.querySelector("#quiz-next-btn");
+      let finishing = false;
+      nextBtn.addEventListener("click", async () => {
+        if (finishing) return;
         soundFX.playClick();
+        if (currentIdx + 1 >= queue.length) {
+          finishing = true;
+          const originalText = nextBtn.textContent;
+          nextBtn.disabled = true;
+          nextBtn.textContent = "Saving...";
+          const perfect = firstPassCorrect === totalUnique;
+          try {
+            const ok = await onComplete({
+              xpReward: node.xp || 20,
+              bonusReward: perfect ? 5 : 0,
+              bonusEarned: perfect,
+              bonusFeedback: perfect ? "Perfect 3/3 on the first try!" : "",
+              feedback: `You nailed ${firstPassCorrect} / ${totalUnique} on the first try!`,
+            });
+            if (ok === false && nextBtn.isConnected) {
+              finishing = false;
+              nextBtn.disabled = false;
+              nextBtn.textContent = originalText;
+            }
+          } catch {
+            if (nextBtn.isConnected) {
+              finishing = false;
+              nextBtn.disabled = false;
+              nextBtn.textContent = originalText;
+            }
+          }
+          return;
+        }
         currentIdx += 1;
         selectedOption = null;
         answered = false;

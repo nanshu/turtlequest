@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "turtlequest",
+  "main": "./worker/index.js",
+  "compatibility_date": "2026-11-27",
+  "build": {
+    "command": "node scripts/build-assets.mjs",
+    "watch_dir": ["index.html", "_headers", "css", "js"]
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "turtlequest-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

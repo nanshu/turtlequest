@@ -1,4 +1,9 @@
 export const STORAGE_KEY = "turtlequest_v1";
+const RECENT_USERS_KEY = "turtlequest_recent_users";
+
+export function getScopedStorageKey(userId = null) {
+  return userId ? `${STORAGE_KEY}:user:${userId}` : STORAGE_KEY;
+}
 
 export function createDefaultState() {
   return {
@@ -97,11 +102,11 @@ export function sanitizeState(raw) {
   };
 }
 
-export function loadState(customStorage) {
+export function loadState(customStorage, storageKey = STORAGE_KEY) {
   const storage = getStorage(customStorage);
   if (!storage) return createDefaultState();
   try {
-    const rawText = storage.getItem(STORAGE_KEY);
+    const rawText = storage.getItem(storageKey);
     if (!rawText) return createDefaultState();
     return sanitizeState(JSON.parse(rawText));
   } catch {
@@ -109,12 +114,12 @@ export function loadState(customStorage) {
   }
 }
 
-export function saveState(state, customStorage) {
+export function saveState(state, customStorage, storageKey = STORAGE_KEY) {
   const clean = sanitizeState(state);
   const storage = getStorage(customStorage);
   if (storage) {
     try {
-      storage.setItem(STORAGE_KEY, JSON.stringify(clean));
+      storage.setItem(storageKey, JSON.stringify(clean));
     } catch {
       // Ignore quota errors cleanly
     }
@@ -122,18 +127,65 @@ export function saveState(state, customStorage) {
   return clean;
 }
 
-export function updateState(mutator, customStorage) {
-  const current = loadState(customStorage);
+export function clearStoredState(customStorage, storageKey = STORAGE_KEY) {
+  const storage = getStorage(customStorage);
+  if (!storage) return;
+  try {
+    storage.removeItem(storageKey);
+  } catch {
+    // Ignore
+  }
+}
+
+export function updateState(mutator, customStorage, storageKey = STORAGE_KEY) {
+  const current = loadState(customStorage, storageKey);
   const draft = structuredClone(current);
   const next = mutator(draft) || draft;
-  return saveState(next, customStorage);
+  return saveState(next, customStorage, storageKey);
+}
+
+export function hasMeaningfulProgress(state) {
+  if (!state || typeof state !== "object") return false;
+  if ((state.xp || 0) > 0) return true;
+  if (Object.keys(state.completedLessons || {}).length > 0) return true;
+  if ((state.sandboxGallery || []).length > 0) return true;
+  if (typeof state.sandboxCode === "string" && state.sandboxCode.trim().length > 0) return true;
+  return Object.values(state.draftCode || {}).some((c) => typeof c === "string" && c.trim().length > 0);
+}
+
+export function getRecentUsernames(customStorage) {
+  const storage = getStorage(customStorage);
+  if (!storage) return [];
+  try {
+    const raw = JSON.parse(storage.getItem(RECENT_USERS_KEY) || "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((u) => typeof u === "string" && u.trim().length > 0).slice(0, 6);
+  } catch {
+    return [];
+  }
+}
+
+export function rememberUsername(username, customStorage) {
+  const storage = getStorage(customStorage);
+  if (!storage || typeof username !== "string" || !username.trim()) return [];
+  const clean = username.trim();
+  const next = [
+    clean,
+    ...getRecentUsernames(storage).filter((u) => u.toLowerCase() !== clean.toLowerCase()),
+  ].slice(0, 6);
+  try {
+    storage.setItem(RECENT_USERS_KEY, JSON.stringify(next));
+  } catch {
+    // Ignore quota errors
+  }
+  return next;
 }
 
 export function exportStateJSON(state) {
   return JSON.stringify(sanitizeState(state), null, 2);
 }
 
-export function importStateJSON(jsonText, customStorage) {
+export function importStateJSON(jsonText, customStorage, storageKey = STORAGE_KEY) {
   let parsed;
   try {
     parsed = JSON.parse(jsonText);
@@ -148,6 +200,6 @@ export function importStateJSON(jsonText, customStorage) {
   if (!hasKnownKey) {
     return { ok: false, error: "Save file is missing TurtleQuest progress fields." };
   }
-  const clean = saveState(sanitizeState(parsed), customStorage);
+  const clean = saveState(sanitizeState(parsed), customStorage, storageKey);
   return { ok: true, state: clean };
 }

@@ -214,7 +214,7 @@ export function renderLessonView(
     },
     onFinish() {
       if (editor) editor.setActiveLine(null);
-      if (pendingVictory) {
+      if (!disposed && pendingVictory) {
         const v = pendingVictory;
         pendingVictory = null;
         onPass(v);
@@ -383,7 +383,7 @@ export function renderLessonView(
         } else {
           player.finishStream();
         }
-        if (pendingVictory && player.isFinished()) {
+        if (!disposed && pendingVictory && player.isFinished()) {
           const v = pendingVictory;
           pendingVictory = null;
           onPass(v);
@@ -558,6 +558,11 @@ export function renderLessonView(
   return {
     insertSnippet(snippet) {
       editor.insertText(snippet);
+    },
+    flushDraft() {
+      if (disposed) return;
+      clearTimeout(saveTimer);
+      onSaveDraft(lesson.id, editor.getCode());
     },
     updateAppearance({ skin, rainbowTrail }) {
       if (skin) renderer.setSkin(skin);

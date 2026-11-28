@@ -59,7 +59,9 @@ function diffDays(prevDateStr, nextDateStr) {
 
 export function refreshDailyCounters(state, todayStr = formatLocalDate()) {
   const next = structuredClone(state);
-  if (next.dailyDate !== todayStr) {
+  const dailyGap = diffDays(next.dailyDate, todayStr);
+  // Only advance dailyDate forward; never rewind backwards across timezone changes
+  if (next.dailyDate === null || dailyGap === null || dailyGap > 0) {
     next.dailyDate = todayStr;
     next.dailyXp = 0;
   }
@@ -100,20 +102,29 @@ export function recordLessonCompletion(
   next.xp += earnedXp;
   next.gems += earnedGems;
   next.dailyXp += earnedXp;
-  next.dailyDate = todayStr;
+  const dailyGap = diffDays(next.dailyDate, todayStr);
+  if (next.dailyDate === null || dailyGap === null || dailyGap >= 0) {
+    next.dailyDate = todayStr;
+  }
 
   // Forgiving streak: automatic 2-day weekend freeze (survives up to 2 missed days, gap <= 3)
+  // Guard against negative gap so westward timezone travel or clientDate oscillation never rewinds lastActiveDate
   const gap = diffDays(next.lastActiveDate, todayStr);
   if (next.lastActiveDate === null || gap === null) {
     next.streak = 1;
+    next.lastActiveDate = todayStr;
+  } else if (gap < 0) {
+    next.streak = Math.max(1, next.streak);
   } else if (gap === 0) {
     next.streak = Math.max(1, next.streak);
+    next.lastActiveDate = todayStr;
   } else if (gap > 0 && gap <= 3) {
     next.streak = Math.max(1, next.streak) + 1;
+    next.lastActiveDate = todayStr;
   } else if (gap > 3) {
     next.streak = 1;
+    next.lastActiveDate = todayStr;
   }
-  next.lastActiveDate = todayStr;
 
   const hadBonus = Boolean(prevEntry && prevEntry.bonus);
   const finalBonus = hadBonus || Boolean(bonusEarned);

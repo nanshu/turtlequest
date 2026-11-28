@@ -209,12 +209,25 @@ export function renderSandboxView(
       });
     });
     galleryMount.querySelectorAll(".gallery-del-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         soundFX.playClick();
-        const nextGallery = onDeleteGalleryItem(btn.dataset.id);
-        state.sandboxGallery = nextGallery;
-        galleryMount.innerHTML = renderGalleryList(nextGallery);
-        bindGalleryEvents();
+        btn.disabled = true;
+        try {
+          const nextGallery = await onDeleteGalleryItem(btn.dataset.id);
+          if (disposed) return;
+          state.sandboxGallery = nextGallery;
+          galleryMount.innerHTML = renderGalleryList(nextGallery);
+          bindGalleryEvents();
+        } catch (err) {
+          if (disposed) return;
+          btn.disabled = false;
+          errorBoxEl.innerHTML = `
+            <div class="error-panel">
+              <h4>⚠️ Could Not Delete Drawing</h4>
+              <p>${escapeHtml(err?.message || "Please try again in a moment.")}</p>
+            </div>
+          `;
+        }
       });
     });
   }
@@ -367,20 +380,53 @@ export function renderSandboxView(
     renderer.exportPNG(`turtlequest-${Date.now()}.png`);
   });
 
-  container.querySelector("#sb-save-btn").addEventListener("click", () => {
+  const saveGalleryBtn = container.querySelector("#sb-save-btn");
+  saveGalleryBtn.addEventListener("click", async () => {
+    const code = editor.getCode();
+    if (!code.trim()) {
+      soundFX.playError();
+      errorBoxEl.innerHTML = `
+        <div class="error-panel">
+          <h4>⚠️ Nothing to Save Yet</h4>
+          <p>Write a few lines of Python turtle code first, then click Save!</p>
+        </div>
+      `;
+      return;
+    }
     const nameInput = container.querySelector("#sb-save-name");
     const name = nameInput.value.trim() || `Creation ${(state.sandboxGallery?.length || 0) + 1}`;
-    soundFX.playCorrect();
-    const nextGallery = onSaveGalleryItem({
-      id: `art-${Date.now()}`,
-      name,
-      code: editor.getCode(),
-      savedAt: new Date().toISOString(),
-    });
-    state.sandboxGallery = nextGallery;
-    nameInput.value = "";
-    galleryMount.innerHTML = renderGalleryList(nextGallery);
-    bindGalleryEvents();
+    saveGalleryBtn.disabled = true;
+    saveGalleryBtn.textContent = "Saving...";
+    errorBoxEl.innerHTML = "";
+    try {
+      const nextGallery = await onSaveGalleryItem({
+        id: `art-${Date.now()}`,
+        name,
+        code,
+        savedAt: new Date().toISOString(),
+      });
+      if (disposed) return;
+      soundFX.playCorrect();
+      state.sandboxGallery = nextGallery;
+      nameInput.value = "";
+      galleryMount.innerHTML = renderGalleryList(nextGallery);
+      bindGalleryEvents();
+    } catch (err) {
+      if (!disposed) {
+        soundFX.playError();
+        errorBoxEl.innerHTML = `
+          <div class="error-panel">
+            <h4>⚠️ Could Not Save Drawing</h4>
+            <p>${escapeHtml(err?.message || "Please try again in a moment.")}</p>
+          </div>
+        `;
+      }
+    } finally {
+      if (!disposed) {
+        saveGalleryBtn.disabled = false;
+        saveGalleryBtn.textContent = "💾 Save";
+      }
+    }
   });
 
   container.querySelectorAll(".speed-btn").forEach((btn) => {
@@ -415,6 +461,11 @@ export function renderSandboxView(
   return {
     insertSnippet(snippet) {
       editor.insertText(snippet);
+    },
+    flushDraft() {
+      if (disposed) return;
+      clearTimeout(saveTimer);
+      onSaveCode(editor.getCode());
     },
     updateAppearance({ skin, rainbowTrail }) {
       if (skin) renderer.setSkin(skin);

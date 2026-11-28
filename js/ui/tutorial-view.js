@@ -647,19 +647,39 @@ export function renderTutorialView(container, node, { onBack, onComplete }) {
         render();
       }
     });
-    container.querySelector("#tut-next-btn").addEventListener("click", () => {
+    const nextBtn = container.querySelector("#tut-next-btn");
+    let finishing = false;
+    nextBtn.addEventListener("click", async () => {
+      if (finishing) return;
       soundFX.playClick();
       if (!isLast) {
         idx += 1;
         render();
       } else {
-        onComplete({
-          xpReward: node.xp || 15,
-          bonusReward: 0,
-          bonusEarned: false,
-          bonusFeedback: "",
-          feedback: "Awesome! Now you're ready to write real Python code.",
-        });
+        finishing = true;
+        const originalText = nextBtn.textContent;
+        nextBtn.disabled = true;
+        nextBtn.textContent = "Saving...";
+        try {
+          const ok = await onComplete({
+            xpReward: node.xp || 15,
+            bonusReward: 0,
+            bonusEarned: false,
+            bonusFeedback: "",
+            feedback: "Awesome! Now you're ready to write real Python code.",
+          });
+          if (ok === false && nextBtn.isConnected) {
+            finishing = false;
+            nextBtn.disabled = false;
+            nextBtn.textContent = originalText;
+          }
+        } catch {
+          if (nextBtn.isConnected) {
+            finishing = false;
+            nextBtn.disabled = false;
+            nextBtn.textContent = originalText;
+          }
+        }
       }
     });
   }
